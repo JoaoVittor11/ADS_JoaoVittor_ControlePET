@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PetShop System</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- ======================= -->
+    <!--      PÁGINA DE LOGIN      -->
+    <!-- ======================= -->
+    <main id="login-container" class="container">
+        <section class="auth-page">
+            <div class="auth-header">
+                <h1>PetShop System</h1>
+                <p>Bem-vindo! Acesse sua conta.</p>
+            </div>
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="cpf">CPF</label>
+                    <input type="text" id="cpf" placeholder="Digite seu CPF" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Senha</label>
+                    <input type="password" id="password" placeholder="Digite sua senha" required>
+                </div>
+                <button type="submit" class="btn">Entrar</button>
+            </form>
+            <div id="error-message">CPF ou senha inválidos.</div>
+            <div class="auth-footer">
+                <p>Não tem uma conta? <a href="#" id="go-to-register">Cadastre-se</a></p>
+            </div>
+        </section>
+    </main>
+
+    <!-- ========================= -->
+    <!--      PÁGINA DE CADASTRO     -->
+    <!-- ========================= -->
+    <main id="register-container" class="container hidden">
+        <section class="auth-page">
+            <div class="auth-header">
+                <h1>Crie sua Conta</h1>
+                <p>Preencha os dados para começar.</p>
+            </div>
+            <form id="register-form">
+                <div class="form-group">
+                    <label for="reg-name">Nome Completo</label>
+                    <input type="text" id="reg-name" required>
+                </div>
+                 <div class="form-group">
+                    <label for="reg-pet-name">Nome do Pet</label>
+                    <input type="text" id="reg-pet-name" required>
+                </div>
+                 <div class="form-group">
+                    <label for="reg-phone">Telefone</label>
+                    <input type="tel" id="reg-phone" required>
+                </div>
+                <div class="form-group">
+                    <label for="reg-address">Endereço</label>
+                    <input type="text" id="reg-address" required>
+                </div>
+                <div class="form-group">
+                    <label for="reg-cpf">CPF</label>
+                    <input type="text" id="reg-cpf" required>
+                </div>
+                <div class="form-group">
+                    <label for="reg-email">E-mail</label>
+                    <input type="email" id="reg-email" required>
+                </div>
+                <button type="submit" class="btn">Cadastrar</button>
+            </form>
+            <div class="auth-footer">
+                <p>Já tem uma conta? <a href="#" id="go-to-login">Faça login</a></p>
+            </div>
+        </section>
+    </main>
+
+
+    <!-- ======================== -->
+    <!--      PÁGINA PRINCIPAL    -->
+    <!-- ======================== -->
+    <div id="main-app-container" class="hidden">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>PetShop System</h2>
+            </div>
+            <nav id="sidebar-nav" class="sidebar-nav">
+                <a href="#" class="nav-item active" data-page="agendamentos">Agendamentos</a>
+                <a href="#" class="nav-item" data-page="meus-pets">Meus Pets</a>
+            </nav>
+            <div class="sidebar-footer">
+                <button id="logout-btn" class="btn logout-btn">Sair</button>
+            </div>
+        </aside>
+
+        <!-- PÁGINA DE AGENDAMENTOS -->
+        <main id="agendamentos-page" class="dashboard-page">
+            <section class="dashboard">
+                <header class="dashboard-header">
+                    <h1>Novo Agendamento</h1>
+                    <p>Selecione um dia e um horário para o serviço.</p>
+                </header>
+                
+                <div class="scheduler-container">
+                    <div class="calendar-wrapper">
+                        <div class="calendar-header">
+                            <button id="prev-month-btn">&lt;</button>
+                            <h3 id="month-year-header">Setembro 2025</h3>
+                            <button id="next-month-btn">&gt;</button>
+                        </div>
+                        <div class="calendar-weekdays">
+                            <div>Dom</div><div>Seg</div><div>Ter</div><div>Qua</div><div>Qui</div><div>Sex</div><div>Sáb</div>
+                        </div>
+                        <div class="calendar-dates" id="calendar-dates"></div>
+                    </div>
+
+                    <div class="time-slots-wrapper">
+                        <h4>Horários para <span id="selected-date-span">--/--/----</span></h4>
+                        <div class="time-slots" id="time-slots">
+                            <p class="initial-message">Selecione um dia no calendário.</p>
+                        </div>
+                        <button id="confirm-appointment-btn" class="btn hidden">Confirmar Agendamento</button>
+                        <button id="cancel-appointment-btn" class="btn logout-btn hidden">Desmarcar Horário</button>
+                    </div>
+                </div>
+            </section>
+        </main>
+        
+        <!-- PÁGINA MEUS PETS -->
+        <main id="meus-pets-page" class="dashboard-page hidden">
+             <section class="dashboard">
+                <header class="dashboard-header">
+                    <h1>Meus Pets</h1>
+                    <p>Visualize e adicione as informações dos seus animais.</p>
+                </header>
+                
+                <div class="page-actions">
+                    <button id="show-add-pet-form-btn" class="btn btn-secondary">Adicionar Novo Pet</button>
+                </div>
+
+                <!-- Formulário de Cadastro de Pet (escondido) -->
+                <div id="add-pet-form-container" class="pet-card hidden">
+                    <h3>Cadastrar Novo Pet</h3>
+                    <form id="add-pet-form">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="pet-name">Nome do Animal</label>
+                                <input type="text" id="pet-name" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="pet-age">Idade</label>
+                                <input type="text" id="pet-age" required>
+                            </div>
+                             <div class="form-group">
+                                <label for="pet-fur">Pelagem</label>
+                                <input type="text" id="pet-fur" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="pet-problems">Problemas Médicos</label>
+                            <textarea id="pet-problems" rows="3"></textarea>
+                        </div>
+                         <div class="form-group">
+                            <label for="pet-vaccines">Vacinas (Histórico e Futuras)</label>
+                            <textarea id="pet-vaccines" rows="4"></textarea>
+                        </div>
+                        <div class="form-actions">
+                            <button type="button" id="cancel-add-pet-btn" class="btn btn-secondary">Cancelar</button>
+                            <button type="submit" class="btn">Salvar Pet</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div id="pets-list-container">
+                    <!-- Cards dos pets serão inseridos aqui pelo JS -->
+                </div>
+            </section>
+        </main>
+
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
+
