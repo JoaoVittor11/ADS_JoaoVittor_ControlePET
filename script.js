@@ -45,7 +45,6 @@ document.addEventListener('DOMContentLoaded', () => {
     let selectedTimeSlotElement = null;
 
     const bookedAppointments = {
-        '2025-09-30': ['10:00', '14:00'], '2025-10-05': ['11:00'], '2025-10-15': ['09:00', '10:00', '15:00', '16:00'],
     };
     
     let userPets = [];
