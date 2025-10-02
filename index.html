@@ -93,6 +93,7 @@
             <nav id="sidebar-nav" class="sidebar-nav">
                 <a href="#" class="nav-item active" data-page="agendamentos">Agendamentos</a>
                 <a href="#" class="nav-item" data-page="meus-pets">Meus Pets</a>
+                <a href="#" class="nav-item" data-page="meu-cadastro">Meu Cadastro</a>
             </nav>
             <div class="sidebar-footer">
                 <button id="logout-btn" class="btn logout-btn">Sair</button>
@@ -189,6 +190,44 @@
 
                 <div id="pets-list-container">
                     <!-- Cards dos pets serão inseridos aqui pelo JS -->
+                </div>
+            </section>
+        </main>
+
+        <!-- PÁGINA MEU CADASTRO -->
+        <main id="meu-cadastro-page" class="dashboard-page hidden">
+             <section class="dashboard">
+                <header class="dashboard-header">
+                    <h1>Meu Cadastro</h1>
+                    <p>Visualize e edite suas informações pessoais.</p>
+                </header>
+                
+                <div class="profile-card pet-card">
+                    <form id="profile-form">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="profile-name">Nome Completo</label>
+                                <input type="text" id="profile-name" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label for="profile-phone">Telefone / Celular</label>
+                                <input type="tel" id="profile-phone" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label for="profile-cpf">CPF (não editável)</label>
+                                <input type="text" id="profile-cpf" disabled>
+                            </div>
+                             <div class="form-group">
+                                <label for="profile-email">E-mail (não editável)</label>
+                                <input type="email" id="profile-email" disabled>
+                            </div>
+                        </div>
+                        <div class="form-actions" id="profile-actions">
+                            <button type="button" id="edit-profile-btn" class="btn btn-secondary">Editar</button>
+                            <button type="button" id="cancel-edit-profile-btn" class="btn btn-secondary hidden">Cancelar</button>
+                            <button type="submit" id="save-profile-btn" class="btn hidden">Salvar Alterações</button>
+                        </div>
+                    </form>
                 </div>
             </section>
         </main>

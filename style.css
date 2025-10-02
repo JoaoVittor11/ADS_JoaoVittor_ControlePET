@@ -107,6 +107,16 @@ body { font-family: 'Inter', sans-serif; background-color: var(--bg-light); colo
 .btn-delete { background-color: var(--danger-color); }
 .btn-delete:hover { background-color: var(--danger-hover); }
 
+/* --- Estilos da Página "Meu Cadastro" --- */
+#profile-form input:disabled, #profile-form input[readonly] {
+    background-color: #f0f2f5;
+    color: #606770;
+    cursor: not-allowed;
+    border-color: #e4e6e9;
+}
+.profile-card { max-width: 800px; }
+
+
 /* --- Classes de Controle (JS) --- */
 .hidden { display: none !important; }
 
