@@ -33,6 +33,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const nextMonthBtn = document.getElementById('next-month-btn');
     const selectedDateSpan = document.getElementById('selected-date-span');
     const timeSlotsContainer = document.getElementById('time-slots');
+    const appointmentDetails = document.getElementById('appointment-details');
+    const petSelect = document.getElementById('pet-select');
+    const serviceSelect = document.getElementById('service-select');
     const confirmAppointmentBtn = document.getElementById('confirm-appointment-btn');
     const cancelAppointmentBtn = document.getElementById('cancel-appointment-btn');
 
@@ -44,7 +47,17 @@ document.addEventListener('DOMContentLoaded', () => {
     let selectedDateElement = null;
     let selectedTimeSlotElement = null;
 
+    const availableServices = ['Banho', 'Tosa', 'Banho e Tosa', 'Consulta Veterinária'];
+
+    // Estrutura de dados alterada para armazenar mais detalhes
     const bookedAppointments = {
+        '2025-09-30': [
+            { time: '10:00', petId: 1, service: 'Banho' },
+            { time: '14:00', petId: 2, service: 'Tosa' }
+        ],
+        '2025-10-15': [
+            { time: '09:00', petId: 1, service: 'Consulta Veterinária' }
+        ]
     };
     
     let userPets = [];
@@ -144,15 +157,41 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderTimeSlots(dateString) {
         selectedDateSpan.textContent = new Date(dateString + 'T00:00:00').toLocaleDateString('pt-BR');
         timeSlotsContainer.innerHTML = '';
-        const booked = bookedAppointments[dateString] || [];
+        const appointmentsOnDate = bookedAppointments[dateString] || [];
         const availableTimes = ['09:00', '10:00', '11:00', '12:00', '14:00', '15:00', '16:00', '17:00'];
+        
         availableTimes.forEach(time => {
             const timeSlotDiv = document.createElement('div');
-            timeSlotDiv.textContent = time;
             timeSlotDiv.classList.add('time-slot');
-            if(booked.includes(time)) timeSlotDiv.classList.add('unavailable');
-            else timeSlotDiv.dataset.time = time;
+            
+            const appointment = appointmentsOnDate.find(appt => appt.time === time);
+
+            if(appointment) {
+                const pet = userPets.find(p => p.id === appointment.petId);
+                timeSlotDiv.classList.add('unavailable');
+                timeSlotDiv.textContent = `${time} - ${pet ? pet.name : 'Pet'}`;
+                timeSlotDiv.dataset.time = time; // Adiciona para facilitar o cancelamento
+            } else {
+                timeSlotDiv.textContent = time;
+                timeSlotDiv.dataset.time = time;
+            }
             timeSlotsContainer.appendChild(timeSlotDiv);
+        });
+    }
+
+    function populateAppointmentDetails() {
+        petSelect.innerHTML = '<option value="">Selecione...</option>';
+        if (userPets.length === 0) {
+            petSelect.innerHTML = '<option value="">Nenhum pet cadastrado</option>';
+        } else {
+            userPets.forEach(pet => {
+                petSelect.innerHTML += `<option value="${pet.id}">${pet.name}</option>`;
+            });
+        }
+        
+        serviceSelect.innerHTML = '<option value="">Selecione...</option>';
+        availableServices.forEach(service => {
+            serviceSelect.innerHTML += `<option value="${service}">${service}</option>`;
         });
     }
 
@@ -184,116 +223,97 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Agendamentos ---
     prevMonthBtn.addEventListener('click', () => { currentDate.setMonth(currentDate.getMonth() - 1); renderCalendar(); });
     nextMonthBtn.addEventListener('click', () => { currentDate.setMonth(currentDate.getMonth() + 1); renderCalendar(); });
-    calendarDates.addEventListener('click', (e) => { if (e.target.dataset.date && !e.target.classList.contains('other-month')) { if (selectedDateElement) selectedDateElement.classList.remove('selected'); selectedDateElement = e.target; selectedDateElement.classList.add('selected'); renderTimeSlots(e.target.dataset.date); confirmAppointmentBtn.classList.add('hidden'); cancelAppointmentBtn.classList.add('hidden'); selectedTimeSlotElement = null; } });
-    timeSlotsContainer.addEventListener('click', (e) => { if (e.target.matches('.time-slot')) { if (selectedTimeSlotElement) selectedTimeSlotElement.classList.remove('selected'); selectedTimeSlotElement = e.target; selectedTimeSlotElement.classList.add('selected'); cancelAppointmentBtn.classList.toggle('hidden', !e.target.classList.contains('unavailable')); confirmAppointmentBtn.classList.toggle('hidden', e.target.classList.contains('unavailable')); } });
-    confirmAppointmentBtn.addEventListener('click', () => { if (!selectedDateElement || !selectedTimeSlotElement) return; const dateString = selectedDateElement.dataset.date; const timeString = selectedTimeSlotElement.dataset.time; if (!bookedAppointments[dateString]) bookedAppointments[dateString] = []; bookedAppointments[dateString].push(timeString); selectedTimeSlotElement.classList.add('unavailable'); selectedTimeSlotElement.removeAttribute('data-time'); confirmAppointmentBtn.classList.add('hidden'); selectedTimeSlotElement = null; });
-    cancelAppointmentBtn.addEventListener('click', () => { if (!selectedDateElement || !selectedTimeSlotElement) return; const dateString = selectedDateElement.dataset.date; const timeString = selectedTimeSlotElement.textContent; if (bookedAppointments[dateString]) { const index = bookedAppointments[dateString].indexOf(timeString); if (index > -1) bookedAppointments[dateString].splice(index, 1); } selectedTimeSlotElement.classList.remove('unavailable'); selectedTimeSlotElement.setAttribute('data-time', timeString); cancelAppointmentBtn.classList.add('hidden'); selectedTimeSlotElement = null; });
+    
+    calendarDates.addEventListener('click', (e) => { 
+        if (e.target.dataset.date && !e.target.classList.contains('other-month')) { 
+            if (selectedDateElement) selectedDateElement.classList.remove('selected'); 
+            selectedDateElement = e.target; 
+            selectedDateElement.classList.add('selected'); 
+            renderTimeSlots(e.target.dataset.date); 
+            appointmentDetails.classList.add('hidden');
+            confirmAppointmentBtn.classList.add('hidden'); 
+            cancelAppointmentBtn.classList.add('hidden'); 
+            selectedTimeSlotElement = null; 
+        } 
+    });
+    
+    timeSlotsContainer.addEventListener('click', (e) => { 
+        if (e.target.matches('.time-slot')) { 
+            if (selectedTimeSlotElement) selectedTimeSlotElement.classList.remove('selected');
+            selectedTimeSlotElement = e.target; 
+            selectedTimeSlotElement.classList.add('selected'); 
+
+            const isUnavailable = e.target.classList.contains('unavailable');
+            cancelAppointmentBtn.classList.toggle('hidden', !isUnavailable); 
+            
+            appointmentDetails.classList.toggle('hidden', isUnavailable);
+            confirmAppointmentBtn.classList.toggle('hidden', isUnavailable);
+            
+            if (!isUnavailable) {
+                populateAppointmentDetails();
+            }
+        } 
+    });
+    
+    confirmAppointmentBtn.addEventListener('click', () => { 
+        if (!selectedDateElement || !selectedTimeSlotElement) return;
+
+        const petId = parseInt(petSelect.value);
+        const service = serviceSelect.value;
+        if (!petId || !service) {
+            alert('Por favor, selecione um pet e um serviço para agendar.');
+            return;
+        }
+
+        const dateString = selectedDateElement.dataset.date; 
+        const timeString = selectedTimeSlotElement.dataset.time;
+        
+        if (!bookedAppointments[dateString]) bookedAppointments[dateString] = []; 
+        
+        bookedAppointments[dateString].push({ time: timeString, petId, service });
+        
+        renderTimeSlots(dateString); // Re-renderiza para mostrar o novo agendamento
+
+        appointmentDetails.classList.add('hidden');
+        confirmAppointmentBtn.classList.add('hidden');
+        selectedTimeSlotElement = null; 
+    });
+    
+    cancelAppointmentBtn.addEventListener('click', () => { 
+        if (!selectedDateElement || !selectedTimeSlotElement) return; 
+        
+        const dateString = selectedDateElement.dataset.date;
+        const timeString = selectedTimeSlotElement.dataset.time;
+        
+        if (bookedAppointments[dateString]) { 
+            const appointmentIndex = bookedAppointments[dateString].findIndex(appt => appt.time === timeString);
+            if (appointmentIndex > -1) {
+                const appointment = bookedAppointments[dateString][appointmentIndex];
+                const pet = userPets.find(p => p.id === appointment.petId);
+                if (confirm(`Deseja desmarcar o serviço "${appointment.service}" para ${pet ? pet.name : 'o pet'} às ${timeString}?`)) {
+                    bookedAppointments[dateString].splice(appointmentIndex, 1);
+                    renderTimeSlots(dateString); // Re-renderiza para liberar o horário
+                }
+            } 
+        } 
+        cancelAppointmentBtn.classList.add('hidden');
+        selectedTimeSlotElement = null; 
+    });
     
     // --- Cadastro de Pets ---
-    showAddPetFormBtn.addEventListener('click', () => {
-        addPetFormContainer.classList.remove('hidden');
-        showAddPetFormBtn.classList.add('hidden');
-    });
-
-    cancelAddPetBtn.addEventListener('click', () => {
-        addPetFormContainer.classList.add('hidden');
-        showAddPetFormBtn.classList.remove('hidden');
-        addPetForm.reset();
-    });
-
-    addPetForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const newPet = {
-            id: userPets.length > 0 ? Math.max(...userPets.map(p => p.id)) + 1 : 1,
-            name: document.getElementById('pet-name').value,
-            age: document.getElementById('pet-age').value,
-            fur: document.getElementById('pet-fur').value,
-            medicalProblems: document.getElementById('pet-problems').value,
-            vaccineNotes: document.getElementById('pet-vaccines').value,
-            vaccinations: [] 
-        };
-        userPets.push(newPet);
-        renderPetsPage();
-        addPetFormContainer.classList.add('hidden');
-        showAddPetFormBtn.classList.remove('hidden');
-        addPetForm.reset();
-    });
+    showAddPetFormBtn.addEventListener('click', () => { addPetFormContainer.classList.remove('hidden'); showAddPetFormBtn.classList.add('hidden'); });
+    cancelAddPetBtn.addEventListener('click', () => { addPetFormContainer.classList.add('hidden'); showAddPetFormBtn.classList.remove('hidden'); addPetForm.reset(); });
+    addPetForm.addEventListener('submit', (e) => { e.preventDefault(); const newPet = { id: userPets.length > 0 ? Math.max(...userPets.map(p => p.id)) + 1 : 1, name: document.getElementById('pet-name').value, age: document.getElementById('pet-age').value, fur: document.getElementById('pet-fur').value, medicalProblems: document.getElementById('pet-problems').value, vaccineNotes: document.getElementById('pet-vaccines').value, vaccinations: [] }; userPets.push(newPet); renderPetsPage(); addPetFormContainer.classList.add('hidden'); showAddPetFormBtn.classList.remove('hidden'); addPetForm.reset(); });
 
     // --- Gerenciamento de Pets e Vacinas ---
     petsListContainer.addEventListener('click', (e) => {
-        const target = e.target.closest('.action-btn');
-        if (!target) return;
-
-        const action = target.dataset.action;
-        const petId = parseInt(target.dataset.petId);
-        
-        // Ações relacionadas ao PET
-        if (action === 'delete-pet') {
-            if (confirm('Tem certeza que deseja excluir o cadastro deste pet? Esta ação não pode ser desfeita.')) {
-                const petIndex = userPets.findIndex(p => p.id === petId);
-                if (petIndex > -1) {
-                    userPets.splice(petIndex, 1);
-                    renderPetsPage();
-                }
-            }
-        }
-        
-        if (action === 'edit-pet') {
-            const pet = userPets.find(p => p.id === petId);
-            if (pet) {
-                const newName = prompt('Nome do Pet:', pet.name);
-                if (newName === null) return;
-                const newAge = prompt('Idade:', pet.age);
-                if (newAge === null) return;
-                const newFur = prompt('Pelagem:', pet.fur);
-                if (newFur === null) return;
-                const newProblems = prompt('Problemas Médicos:', pet.medicalProblems);
-                if (newProblems === null) return;
-                const newVaccineNotes = prompt('Vacinas (Histórico/Próximas):', pet.vaccineNotes);
-                if (newVaccineNotes === null) return;
-
-                pet.name = newName;
-                pet.age = newAge;
-                pet.fur = newFur;
-                pet.medicalProblems = newProblems;
-                pet.vaccineNotes = newVaccineNotes;
-                renderPetsPage();
-            }
-        }
-
-        // Ações relacionadas a VACINAS
+        const target = e.target.closest('.action-btn'); if (!target) return;
+        const action = target.dataset.action; const petId = parseInt(target.dataset.petId);
+        if (action === 'delete-pet') { if (confirm('Tem certeza que deseja excluir o cadastro deste pet? Esta ação não pode ser desfeita.')) { const petIndex = userPets.findIndex(p => p.id === petId); if (petIndex > -1) { userPets.splice(petIndex, 1); renderPetsPage(); } } }
+        if (action === 'edit-pet') { const pet = userPets.find(p => p.id === petId); if (pet) { const newName = prompt('Nome do Pet:', pet.name); if (newName === null) return; const newAge = prompt('Idade:', pet.age); if (newAge === null) return; const newFur = prompt('Pelagem:', pet.fur); if (newFur === null) return; const newProblems = prompt('Problemas Médicos:', pet.medicalProblems); if (newProblems === null) return; const newVaccineNotes = prompt('Vacinas (Histórico/Próximas):', pet.vaccineNotes); if (newVaccineNotes === null) return; pet.name = newName; pet.age = newAge; pet.fur = newFur; pet.medicalProblems = newProblems; pet.vaccineNotes = newVaccineNotes; renderPetsPage(); } }
         const vaccineIndex = parseInt(target.dataset.vaccineIndex);
-
-        if (action === 'delete-vaccine') {
-            if (confirm('Tem certeza que deseja excluir este registro de vacina?')) {
-                const pet = userPets.find(p => p.id === petId);
-                if (pet) {
-                    pet.vaccinations.splice(vaccineIndex, 1);
-                    renderPetsPage();
-                }
-            }
-        }
-
-        if (action === 'edit-vaccine') {
-            const pet = userPets.find(p => p.id === petId);
-            if (pet) {
-                const vaccineRecord = pet.vaccinations[vaccineIndex];
-                const newVaccineName = prompt('Nome da Vacina:', vaccineRecord.vaccine);
-                if (newVaccineName === null) return;
-                const newDate = prompt('Data (DD/MM/AAAA):', vaccineRecord.date);
-                if (newDate === null) return;
-                const newTime = prompt('Hora (HH:MM):', vaccineRecord.time);
-                if (newTime === null) return;
-                const newLocation = prompt('Local da Aplicação:', vaccineRecord.location);
-                if (newLocation === null) return;
-
-                vaccineRecord.vaccine = newVaccineName;
-                vaccineRecord.date = newDate;
-                vaccineRecord.time = newTime;
-                vaccineRecord.location = newLocation;
-                renderPetsPage();
-            }
-        }
+        if (action === 'delete-vaccine') { if (confirm('Tem certeza que deseja excluir este registro de vacina?')) { const pet = userPets.find(p => p.id === petId); if (pet) { pet.vaccinations.splice(vaccineIndex, 1); renderPetsPage(); } } }
+        if (action === 'edit-vaccine') { const pet = userPets.find(p => p.id === petId); if (pet) { const vaccineRecord = pet.vaccinations[vaccineIndex]; const newVaccineName = prompt('Nome da Vacina:', vaccineRecord.vaccine); if (newVaccineName === null) return; const newDate = prompt('Data (DD/MM/AAAA):', vaccineRecord.date); if (newDate === null) return; const newTime = prompt('Hora (HH:MM):', vaccineRecord.time); if (newTime === null) return; const newLocation = prompt('Local da Aplicação:', vaccineRecord.location); if (newLocation === null) return; vaccineRecord.vaccine = newVaccineName; vaccineRecord.date = newDate; vaccineRecord.time = newTime; vaccineRecord.location = newLocation; renderPetsPage(); } }
     });
 
     // ===================================================================
