@@ -1,282 +1,616 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // ===================================================================
-    //  1. SELEÇÃO DE ELEMENTOS DO DOM
-    // ===================================================================
-    
-    const loginContainer = document.getElementById('login-container');
-    const registerContainer = document.getElementById('register-container');
-    const mainAppContainer = document.getElementById('main-app-container');
-    const allMainContainers = [loginContainer, registerContainer, mainAppContainer];
+    // ===================================================================
+    //  1. SELEÇÃO DE ELEMENTOS DO DOM
+    // ===================================================================
+    const loginContainer = document.getElementById('login-container');
+    const registerContainer = document.getElementById('register-container');
+    const mainAppContainer = document.getElementById('main-app-container');
+    const allMainContainers = [loginContainer, registerContainer, mainAppContainer];
 
-    const loginForm = document.getElementById('login-form');
-    const cpfInput = document.getElementById('cpf');
-    const passwordInput = document.getElementById('password');
-    const errorMessage = document.getElementById('error-message');
-    const logoutBtn = document.getElementById('logout-btn');
-    const goToRegisterLink = document.getElementById('go-to-register');
-    const goToLoginLink = document.getElementById('go-to-login');
+    const loginForm = document.getElementById('login-form');
+    const registerForm = document.getElementById('register-form');
+    const cpfLoginInput = document.getElementById('cpf-login');
+    const passwordLoginInput = document.getElementById('password-login');
+    const regPasswordInput = document.getElementById('reg-password');
+    const regConfirmPasswordInput = document.getElementById('reg-confirm-password');
+    const errorMessage = document.getElementById('error-message');
+    const logoutBtn = document.getElementById('logout-btn');
+    const goToRegisterLink = document.getElementById('go-to-register');
+    const goToLoginLink = document.getElementById('go-to-login');
+    const sidebarNav = document.getElementById('sidebar-nav');
 
-    const sidebarNav = document.getElementById('sidebar-nav');
-    const navItems = sidebarNav.querySelectorAll('.nav-item');
-    
-    // --- PÁGINA "MEUS PETS" ---
-    const petsListContainer = document.getElementById('pets-list-container');
-    const showAddPetFormBtn = document.getElementById('show-add-pet-form-btn');
-    const addPetFormContainer = document.getElementById('add-pet-form-container');
-    const addPetForm = document.getElementById('add-pet-form');
-    const cancelAddPetBtn = document.getElementById('cancel-add-pet-btn');
-    
-    // --- PÁGINA "AGENDAMENTOS" ---
-    const monthYearHeader = document.getElementById('month-year-header');
-    const calendarDates = document.getElementById('calendar-dates');
-    const prevMonthBtn = document.getElementById('prev-month-btn');
-    const nextMonthBtn = document.getElementById('next-month-btn');
-    const selectedDateSpan = document.getElementById('selected-date-span');
-    const timeSlotsContainer = document.getElementById('time-slots');
-    const appointmentDetails = document.getElementById('appointment-details');
-    const petSelect = document.getElementById('pet-select');
-    const serviceSelect = document.getElementById('service-select');
-    const confirmAppointmentBtn = document.getElementById('confirm-appointment-btn');
-    const cancelAppointmentBtn = document.getElementById('cancel-appointment-btn');
+    // Página "Meus Pets"
+    const petsListContainer = document.getElementById('pets-list-container');
+    const showAddPetFormBtn = document.getElementById('show-add-pet-form-btn');
+    const addPetFormContainer = document.getElementById('add-pet-form-container');
+    const addPetForm = document.getElementById('add-pet-form');
+    const cancelAddPetBtn = document.getElementById('cancel-add-pet-btn');
 
-    // --- PÁGINA "MEU CADASTRO" ---
-    const profileForm = document.getElementById('profile-form');
-    const profileNameInput = document.getElementById('profile-name');
-    const profilePhoneInput = document.getElementById('profile-phone');
-    const profileCpfInput = document.getElementById('profile-cpf');
-    const profileEmailInput = document.getElementById('profile-email');
-    const editProfileBtn = document.getElementById('edit-profile-btn');
-    const saveProfileBtn = document.getElementById('save-profile-btn');
-    const cancelEditProfileBtn = document.getElementById('cancel-edit-profile-btn');
+    // Página "Agendamentos"
+    const monthYearHeader = document.getElementById('month-year-header');
+    const calendarDates = document.getElementById('calendar-dates');
+    const prevMonthBtn = document.getElementById('prev-month-btn');
+    const nextMonthBtn = document.getElementById('next-month-btn');
+    const selectedDateSpan = document.getElementById('selected-date-span');
+    const timeSlotsContainer = document.getElementById('time-slots');
+    const appointmentDetails = document.getElementById('appointment-details');
+    const petSelect = document.getElementById('pet-select');
+    const serviceSelect = document.getElementById('service-select');
+    const confirmAppointmentBtn = document.getElementById('confirm-appointment-btn');
+    const cancelAppointmentBtn = document.getElementById('cancel-appointment-btn');
 
-    // ===================================================================
-    //  2. DADOS E ESTADO DA APLICAÇÃO (SIMULANDO BANCO DE DADOS)
-    // ===================================================================
-    
-    let currentDate = new Date(2025, 8, 30); // Setembro 2025
-    let selectedDateElement = null;
-    let selectedTimeSlotElement = null;
+    // Página "Meu Cadastro"
+    const profileForm = document.getElementById('profile-form');
+    const profileNameInput = document.getElementById('profile-name');
+    const profilePhoneInput = document.getElementById('profile-phone');
+    const profileCpfInput = document.getElementById('profile-cpf');
+    const profileEmailInput = document.getElementById('profile-email');
+    // NOVOS CAMPOS ADICIONADOS
+    const profilePetNameInput = document.getElementById('profile-pet-name');
+    const profilePetBreedInput = document.getElementById('profile-pet-breed');
+    const editProfileBtn = document.getElementById('edit-profile-btn');
+    const saveProfileBtn = document.getElementById('save-profile-btn');
+    const cancelEditProfileBtn = document.getElementById('cancel-edit-profile-btn');
 
-    let currentUser = {
-        name: "",
-        phone: "",
-        cpf: "",
-        email: ""
-    };
+    // Inputs alternativos (backup)
+    const cpfInput = document.getElementById('cpf');
+    const passwordInput = document.getElementById('password');
 
-    const availableServices = ['Banho', 'Tosa', 'Banho e Tosa', 'Consulta Veterinária'];
+    // API
+    const API_URL = 'http://localhost:3333';
 
-    const bookedAppointments = {
-    };
-    
-    let userPets = [];
+    // ===================================================================
+    //  2. DADOS E ESTADO DA APLICAÇÃO
+    // ===================================================================
+    let currentDate = new Date(2025, 8, 30); // Setembro 2025
+    let selectedDateElement = null;
+    let selectedTimeSlotElement = null;
 
-    // ===================================================================
-    //  3. FUNÇÕES PRINCIPAIS
-    // ===================================================================
+    let currentUser = {
+        name: "Usuário Exemplo",
+        phone: "11912345678",
+        cpf: "123.456.789-00",
+        email: "exemplo@email.com"
+    };
 
-    function showMainContainer(containerToShow) {
-        allMainContainers.forEach(container => container.classList.toggle('hidden', container !== containerToShow));
-    }
+    const availableServices = ['Banho', 'Tosa', 'Banho e Tosa', 'Consulta Veterinária'];
+    const bookedAppointments = {};
+    // Adicionei um pet de exemplo para a página de cadastro funcionar
+    let userPets = [
+        { id: 1, name: "Rex", age: "5 anos", fur: "Vira-lata", breed: "Vira-lata", medicalProblems: "Nenhum", vaccineNotes: "V10 em dia", vaccinations: [] }
+    ];
 
-    function showDashboardPage(pageId) {
-        document.querySelectorAll('#main-app-container .dashboard-page').forEach(page => {
-            page.classList.toggle('hidden', page.id !== `${pageId}-page`);
+    // ===================================================================
+    //  3. FUNÇÕES DE CONTROLE DA INTERFACE (UI)
+    // ===================================================================
+    function showMainContainer(containerToShow) {
+        allMainContainers.forEach(container => {
+            if (container) container.classList.add('hidden');
+        });
+        if (containerToShow) containerToShow.classList.remove('hidden');
+    }
+
+    function showDashboardPage(pageId) {
+        document.querySelectorAll('#main-app-container .dashboard-page').forEach(page => {
+            page.classList.toggle('hidden', page.id !== `${pageId}-page`);
+        });
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.classList.toggle('active', item.dataset.page === pageId);
+        });
+
+        // CHAMA renderCalendar quando for para agendamentos
+        if (pageId === 'agendamentos') {
+            renderCalendar();
+        }
+        if (pageId === 'meu-cadastro') {
+            // Garante que o modo de edição seja resetado ao mudar de página
+            toggleProfileEdit(false); 
+            renderProfilePage();
+        }
+        if (pageId === 'meus-pets') {
+            renderPetsPage();
+        }
+    }
+
+    /**
+     * FUNÇÃO SUBSTITUÍDA (vinda do seu prompt)
+     */
+    function renderProfilePage() {
+        if (profileNameInput) profileNameInput.value = currentUser.name || '';
+        if (profilePhoneInput) profilePhoneInput.value = currentUser.phone || '';
+        if (profileCpfInput) profileCpfInput.value = currentUser.cpf || '';
+        if (profileEmailInput) profileEmailInput.value = currentUser.email || '';
+
+        // Mostra dados do primeiro pet, se houver
+        const mainPet = userPets.length > 0 ? userPets[0] : null;
+        if (profilePetNameInput) {
+            profilePetNameInput.value = mainPet ? mainPet.name : '';
+        }
+        if (profilePetBreedInput) {
+            profilePetBreedInput.value = mainPet ? (mainPet.breed || mainPet.fur || '') : '';
+        }
+    }
+
+    /**
+     * FUNÇÃO ATUALIZADA (para incluir campos do pet)
+     */
+    function toggleProfileEdit(isEditing) {
+        // Campos que podem ser editados
+        if (profileNameInput) profileNameInput.readOnly = !isEditing;
+        if (profilePhoneInput) profilePhoneInput.readOnly = !isEditing;
+        if (profilePetNameInput) profilePetNameInput.readOnly = !isEditing;
+        if (profilePetBreedInput) profilePetBreedInput.readOnly = !isEditing;
+
+        // Campos que NUNCA são editáveis (CPF/Email)
+        // Eles já devem estar com 'disabled' no HTML, o que é melhor que 'readonly'
+        // Mas se estivessem com 'readonly', faríamos:
+        // if (profileCpfInput) profileCpfInput.readOnly = true;
+        // if (profileEmailInput) profileEmailInput.readOnly = true;
+
+        // Botões
+        if (editProfileBtn) editProfileBtn.classList.toggle('hidden', isEditing);
+        if (saveProfileBtn) saveProfileBtn.classList.toggle('hidden', !isEditing);
+        if (cancelEditProfileBtn) cancelEditProfileBtn.classList.toggle('hidden', !isEditing);
+    }
+
+    function renderPetsPage() {
+        if (!petsListContainer) return;
+        petsListContainer.innerHTML = '';
+        if (userPets.length === 0) {
+            petsListContainer.innerHTML = '<p class="initial-message">Nenhum pet cadastrado. Clique em "Adicionar Novo Pet" para começar.</p>';
+        } else {
+            userPets.forEach(pet => {
+                const vaccineRows = (pet.vaccinations || []).map((v, index) => `
+                    <tr>
+                        <td>${v.vaccine}</td>
+                        <td>${v.date}</td>
+                        <td>${v.time}</td>
+                        <td>${v.location}</td>
+                        <td>
+                            <div class="vaccine-actions">
+                                <button class="action-btn btn-edit" data-action="edit-vaccine" data-pet-id="${pet.id}" data-vaccine-index="${index}">Editar</button>
+                                <button class="action-btn btn-delete" data-action="delete-vaccine" data-pet-id="${pet.id}" data-vaccine-index="${index}">Excluir</button>
+                            </div>
+                        </td>
+                    </tr>`).join('');
+                const petCardHTML = `
+                    <div class="pet-card">
+                        <div class="pet-card-header">
+                            <div class="pet-card-title">
+                                <h3>${pet.name}</h3>
+                                <span>Idade: ${pet.age}</span>
+                            </div>
+                            <div class="pet-card-actions">
+                                <button class="action-btn btn-edit" data-action="edit-pet" data-pet-id="${pet.id}">Editar Pet</button>
+                                <button class="action-btn btn-delete" data-action="delete-pet" data-pet-id="${pet.id}">Excluir Pet</button>
+                            </div>
+                        </div>
+                        <div class="pet-card-info">
+                            <p><strong>Pelagem:</strong> ${pet.fur}</p>
+                            <p><strong>Problemas Médicos:</strong> ${pet.medicalProblems}</p>
+                            <p class="full-width"><strong>Vacinas (Histórico/Próximas):</strong> ${pet.vaccineNotes}</p>
+                            ${(pet.vaccinations || []).length > 0 ? `
+                            <div class="vaccine-card">
+                                <h4>Carteirinha de Vacinação</h4>
+                                <table class="vaccine-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Vacina</th>
+                                            <th>Data</th>
+                                            <th>Hora</th>
+                                            <th>Local</th>
+                                            <th>Ações</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>${vaccineRows}</tbody>
+                                </table>
+                            </div>` : ''}
+                        </div>
+                    </div>`;
+                petsListContainer.insertAdjacentHTML('beforeend', petCardHTML);
+            });
+        }
+    }
+
+    // Função calendário
+    function renderCalendar() {
+        if (!monthYearHeader || !calendarDates) return;
+
+        const year = currentDate.getFullYear();
+        const month = currentDate.getMonth();
+        monthYearHeader.textContent = `${currentDate.toLocaleString('pt-BR', { month: 'long' })} ${year}`;
+        calendarDates.innerHTML = '';
+
+        const firstDayOfMonth = new Date(year, month, 1).getDay();
+        const lastDateOfMonth = new Date(year, month + 1, 0).getDate();
+
+        for (let i = 0; i < firstDayOfMonth; i++) {
+            calendarDates.insertAdjacentHTML('beforeend', `<div class="other-month"></div>`);
+        }
+
+        for (let i = 1; i <= lastDateOfMonth; i++) {
+            const dateDiv = document.createElement('div');
+            dateDiv.textContent = i;
+            dateDiv.classList.add('calendar-day');
+            dateDiv.dataset.date = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+
+            const today = new Date();
+            if (year === today.getFullYear() && month === today.getMonth() && i === today.getDate()) {
+                dateDiv.classList.add('today');
+            }
+
+            calendarDates.appendChild(dateDiv);
+        }
+    }
+
+    function renderTimeSlots(dateString) {
+        if (!selectedDateSpan || !timeSlotsContainer) return;
+
+        try {
+            selectedDateSpan.textContent = new Date(dateString + 'T00:00:00').toLocaleDateString('pt-BR');
+        } catch {
+            selectedDateSpan.textContent = dateString;
+        }
+
+        timeSlotsContainer.innerHTML = '';
+        const appointmentsOnDate = bookedAppointments[dateString] || [];
+        const availableTimes = ['09:00', '10:00', '11:00', '12:00', '14:00', '15:00', '16:00', '17:00'];
+
+        availableTimes.forEach(time => {
+            const timeSlotDiv = document.createElement('div');
+            timeSlotDiv.classList.add('time-slot');
+            timeSlotDiv.dataset.time = time;
+
+            const appointment = appointmentsOnDate.find(appt => appt.time === time);
+            if (appointment) {
+                const pet = userPets.find(p => p.id === appointment.petId);
+                timeSlotDiv.classList.add('unavailable');
+                timeSlotDiv.textContent = `${time} - ${pet ? pet.name : 'Pet'}`;
+            } else {
+                timeSlotDiv.textContent = time;
+            }
+
+            timeSlotsContainer.appendChild(timeSlotDiv);
+        });
+    }
+
+    function populateAppointmentDetails() {
+        if (!petSelect || !serviceSelect) return;
+
+        petSelect.innerHTML = '<option value="">Selecione...</option>';
+        if (userPets.length === 0) {
+            petSelect.innerHTML = '<option value="" disabled>Nenhum pet cadastrado</option>';
+tran      } else {
+            userPets.forEach(pet => {
+                petSelect.innerHTML += `<option value="${pet.id}">${pet.name}</option>`;
+            });
+        }
+
+        serviceSelect.innerHTML = '<option value="">Selecione...</option>';
+        availableServices.forEach(service => {
+            serviceSelect.innerHTML += `<option value="${service}">${service}</option>`;
+        });
+    }
+
+    // ===================================================================
+    //  4. LÓGICA DE AUTENTICAÇÃO COM LOGIN DE FUNCIONÁRIO NO FRONTEND
+    // ===================================================================
+    const fixedEmployeeLogin = 'funcionario';
+    const fixedEmployeePassword = 'Funcion@rio2025';
+
+    if (goToRegisterLink) {
+        goToRegisterLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (errorMessage) errorMessage.style.display = 'none';
+            showMainContainer(registerContainer);
+        });
+    }
+
+    if (goToLoginLink) {
+        goToLoginLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            showMainContainer(loginContainer);
+        });
+    }
+
+    if (registerForm) {
+        registerForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            if (regPasswordInput && regConfirmPasswordInput && regPasswordInput.value !== regConfirmPasswordInput.value) {
+                alert('As senhas não coincidem.');
+                return;
+            }
+
+            const formData = new FormData(registerForm);
+            const data = Object.fromEntries(formData.entries());
+            delete data['nome_pet'];
+            delete data['confirm_password'];
+
+            try {
+                const response = await fetch(`${API_URL}/api/tutores/cadastro`, {
+s                   method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data),
+                });
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.message || 'Falha no cadastro.');
+                alert('Cadastro realizado com sucesso! Pode fazer o login.');
+                registerForm.reset();
+                showMainContainer(loginContainer);
+E           } catch (error) {
+                alert(`Erro no cadastro: ${error.message}`);
+            }
+        });
+    }
+
+    if (loginForm) {
+        loginForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            if (errorMessage) {
+                errorMessage.textContent = '';
+                errorMessage.style.display = 'none';
+            }
+
+            // Login simplificado para funcionário
+            if (cpfLoginInput && passwordLoginInput) {
+                const cpf = cpfLoginInput.value.trim();
+                const senha = passwordLoginInput.value.trim();
+
+                if (cpf === fixedEmployeeLogin && senha === fixedEmployeePassword) {
+                    // Login funcionário pelo frontend
+                    localStorage.setItem('isEmployee', 'true');
+                    localStorage.removeItem('authToken'); // Remove token tutor se houver
+                    showMainContainer(mainAppContainer);
+  D                 showDashboardPage('agendamentos');
+                    renderCalendar();
+                } else {
+                    // Login API normal
+                    const data = { cpf, senha };
+                    try {
+                        const response = await fetch(`${API_URL}/api/tutores/login`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(data),
+                        });
+                        const result = await response.json();
+                        if (!response.ok) throw new Error(result.message || 'Falha no login.');
+                        localStorage.setItem('authToken', result.token);
+                        localStorage.setItem('isEmployee', 'false');
+                        showMainContainer(mainAppContainer);
+                        showDashboardPage('agendamentos');
+                        renderCalendar();
+                    } catch (error) {
+                        if (errorMessage) {
+                            errorMessage.textContent = error.message;
+                            errorMessage.style.display = 'block';
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', () => {
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('isEmployee');
+            if (cpfInput) cpfInput.value = '';
+            if (passwordInput) passwordInput.value = '';
+á           if (cpfLoginInput) cpfLoginInput.value = '';
+            if (passwordLoginInput) passwordLoginInput.value = '';
+            showMainContainer(loginContainer);
+            if (loginForm) loginForm.reset();
+        });
+    }
+
+    // ===================================================================
+    //  5. EVENT LISTENERS
+    // ===================================================================
+A   
+    // Navegação do Sidebar
+    if (sidebarNav) {
+        sidebarNav.addEventListener('click', (e) => {
+            const navItem = e.target.closest('.nav-item');
+            if (navItem) {
+                e.preventDefault();
+Do               const pageId = navItem.dataset.page;
+                if (pageId) showDashboardPage(pageId);
+            }
+        });
+    }
+
+    // Navegação do Calendário
+    if (prevMonthBtn) {
+        prevMonthBtn.addEventListener('click', () => {
+            currentDate.setMonth(currentDate.getMonth() - 1);
+            renderCalendar();
+        });
+    }
+
+    if (nextMonthBtn) {
+        nextMonthBtn.addEventListener('click', () => {
+            currentDate.setMonth(currentDate.getMonth() + 1);
+            renderCalendar();
+        });
+    }
+
+    // Seleção de dias do calendário
+    if (calendarDates) {
+        calendarDates.addEventListener('click', (e) => {
+            if (e.target.dataset.date && !e.target.classList.contains('other-month')) {
+                if (selectedDateElement) selectedDateElement.classList.remove('selected');
+                selectedDateElement = e.target;
+                selectedDateElement.classList.add('selected');
+A               renderTimeSlots(e.target.dataset.date);
+                if (appointmentDetails) appointmentDetails.classList.add('hidden');
+                if (confirmAppointmentBtn) confirmAppointmentBtn.classList.add('hidden');
+                if (cancelAppointmentBtn) cancelAppointmentBtn.classList.add('hidden');
+                selectedTimeSlotElement = null;
+            }
+        });
+    }
+
+    // Seleção de horários disponíveis
+    if (timeSlotsContainer) {
+        timeSlotsContainer.addEventListener('click', (e) => {
+            if (e.target.matches('.time-slot')) {
+                if (selectedTimeSlotElement) selectedTimeSlotElement.classList.remove('selected');
+                selectedTimeSlotElement = e.target;
+                selectedTimeSlotElement.classList.add('selected');
+
+                const isUnavailable = e.target.classList.contains('unavailable');
+                if (cancelAppointmentBtn) cancelAppointmentBtn.classList.toggle('hidden', !isUnavailable);
+                if (appointmentDetails) appointmentDetails.classList.toggle('hidden', isUnavailable);
+                if (confirmAppointmentBtn) confirmAppointmentBtn.classList.toggle('hidden', isUnavailable);
+
+                if (!isUnavailable) {
+                    populateAppointmentDetails();
+                }
+            }
+        });
+    }
+
+    /**
+     * EVENT LISTENERS DA PÁGINA "MEU CADASTRO" (ADICIONADOS)
+     */
+    if (editProfileBtn) {
+        editProfileBtn.addEventListener('click', () => {
+            toggleProfileEdit(true);
         });
-        navItems.forEach(item => item.classList.toggle('active', item.dataset.page === pageId));
     }
 
-    function renderProfilePage() {
-        profileNameInput.value = currentUser.name;
-        profilePhoneInput.value = currentUser.phone;
-        profileCpfInput.value = currentUser.cpf;
-        profileEmailInput.value = currentUser.email;
+    if (cancelEditProfileBtn) {
+        cancelEditProfileBtn.addEventListener('click', () => {
+            toggleProfileEdit(false);
+            renderProfilePage(); // Restaura os valores originais
+        });
     }
 
-    function toggleProfileEdit(isEditing) {
-        profileNameInput.readOnly = !isEditing;
-        profilePhoneInput.readOnly = !isEditing;
+    if (profileForm) {
+        profileForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            // 1. Atualiza o objeto currentUser
+            currentUser.name = profileNameInput.value;
+            currentUser.phone = profilePhoneInput.value;
+            // CPF e E-mail não são editáveis, então não precisamos atualizá-los
 
-        editProfileBtn.classList.toggle('hidden', isEditing);
-        saveProfileBtn.classList.toggle('hidden', !isEditing);
-        cancelEditProfileBtn.classList.toggle('hidden', !isEditing);
-    }
-
-    function renderPetsPage() {
-        petsListContainer.innerHTML = '';
-        if (userPets.length === 0) {
-            petsListContainer.innerHTML = '<p class="initial-message">Nenhum pet cadastrado. Clique em "Adicionar Novo Pet" para começar.</p>';
-        } else {
-            userPets.forEach(pet => {
-                const vaccineRows = pet.vaccinations.map((v, index) => `
-                    <tr>
-                        <td>${v.vaccine}</td>
-                        <td>${v.date}</td>
-                        <td>${v.time}</td>
-                        <td>${v.location}</td>
-                        <td>
-                            <div class="vaccine-actions">
-                                <button class="action-btn btn-edit" data-action="edit-vaccine" data-pet-id="${pet.id}" data-vaccine-index="${index}">Editar</button>
-                                <button class="action-btn btn-delete" data-action="delete-vaccine" data-pet-id="${pet.id}" data-vaccine-index="${index}">Excluir</button>
-                            </div>
-                        </td>
-                    </tr>`).join('');
-                
-                const petCardHTML = `
-                    <div class="pet-card">
-                        <div class="pet-card-header">
-                            <div class="pet-card-title">
-                                <h3>${pet.name}</h3>
-                                <span>Idade: ${pet.age}</span>
-                            </div>
-                            <div class="pet-card-actions">
-                                <button class="action-btn btn-edit" data-action="edit-pet" data-pet-id="${pet.id}">Editar Pet</button>
-                                <button class="action-btn btn-delete" data-action="delete-pet" data-pet-id="${pet.id}">Excluir Pet</button>
-                            </div>
-                        </div>
-                        <div class="pet-card-info">
-                            <p><strong>Pelagem:</strong> ${pet.fur}</p>
-                            <p><strong>Problemas Médicos:</strong> ${pet.medicalProblems}</p>
-                            <p class="full-width"><strong>Vacinas (Histórico/Próximas):</strong> ${pet.vaccineNotes}</p>
-                            ${pet.vaccinations.length > 0 ? `
-                            <div class="vaccine-card">
-                                <h4>Carteirinha de Vacinação</h4>
-                                <table class="vaccine-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Vacina</th>
-                                            <th>Data</th>
-                                            <th>Hora</th>
-                                            <th>Local</th>
-                                            <th>Ações</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>${vaccineRows}</tbody>
-                                </table>
-                            </div>` : ''}
-                        </div>
-                    </div>`;
-                petsListContainer.insertAdjacentHTML('beforeend', petCardHTML);
-            });
-        }
-    }
-
-    function renderCalendar() {
-        const year = currentDate.getFullYear();
-        const month = currentDate.getMonth();
-        monthYearHeader.textContent = `${currentDate.toLocaleString('pt-BR', { month: 'long' })} ${year}`;
-        calendarDates.innerHTML = '';
-        const firstDayOfMonth = new Date(year, month, 1).getDay();
-        const lastDateOfMonth = new Date(year, month + 1, 0).getDate();
-        for (let i = 0; i < firstDayOfMonth; i++) calendarDates.insertAdjacentHTML('beforeend', `<div class="other-month"></div>`);
-        for (let i = 1; i <= lastDateOfMonth; i++) {
-            const dateDiv = document.createElement('div');
-            dateDiv.textContent = i;
-            dateDiv.dataset.date = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
-            const today = new Date();
-            if (year === today.getFullYear() && month === today.getMonth() && i === today.getDate()) dateDiv.classList.add('today');
-            calendarDates.appendChild(dateDiv);
-        }
-    }
-    
-    function renderTimeSlots(dateString) {
-        selectedDateSpan.textContent = new Date(dateString + 'T00:00:00').toLocaleDateString('pt-BR');
-        timeSlotsContainer.innerHTML = '';
-        const appointmentsOnDate = bookedAppointments[dateString] || [];
-        const availableTimes = ['09:00', '10:00', '11:00', '12:00', '14:00', '15:00', '16:00', '17:00'];
-        availableTimes.forEach(time => {
-            const timeSlotDiv = document.createElement('div');
-            timeSlotDiv.classList.add('time-slot');
-            const appointment = appointmentsOnDate.find(appt => appt.time === time);
-            if(appointment) {
-                const pet = userPets.find(p => p.id === appointment.petId);
-                timeSlotDiv.classList.add('unavailable');
-                timeSlotDiv.textContent = `${time} - ${pet ? pet.name : 'Pet'}`;
-                timeSlotDiv.dataset.time = time;
-            } else {
-                timeSlotDiv.textContent = time;
-                timeSlotDiv.dataset.time = time;
+            // 2. Atualiza o objeto do pet (se existir)
+            if (userPets.length > 0) {
+                userPets[0].name = profilePetNameInput.value;
+                userPets[0].breed = profilePetBreedInput.value;
+                userPets[0].fur = profilePetBreedInput.value; // Assume que 'breed' e 'fur' são o mesmo campo aqui
             }
-            timeSlotsContainer.appendChild(timeSlotDiv);
+            
+            // 3. (OPCIONAL) Enviar para API...
+            // ex: await fetch(`${API_URL}/api/tutores/update`, { ... });
+
+            // 4. Trava os campos e exibe mensagem
+            alert('Dados salvos com sucesso!');
+            toggleProfileEdit(false);
         });
     }
 
-    function populateAppointmentDetails() {
-        petSelect.innerHTML = '<option value="">Selecione...</option>';
-        if (userPets.length === 0) {
-            petSelect.innerHTML = '<option value="">Nenhum pet cadastrado</option>';
-        } else {
-            userPets.forEach(pet => { petSelect.innerHTML += `<option value="${pet.id}">${pet.name}</option>`; });
-        }
-        serviceSelect.innerHTML = '<option value="">Selecione...</option>';
-        availableServices.forEach(service => { serviceSelect.innerHTML += `<option value="${service}">${service}</option>`; });
-    }
+    // Confirmar agendamento
+    if (confirmAppointmentBtn) {
+        confirmAppointmentBtn.addEventListener('click', () => {
+            if (!selectedDateElement || !selectedTimeSlotElement) return;
 
-    // ===================================================================
-    //  4. EVENT LISTENERS
-    // ===================================================================
+            const petId = parseInt(petSelect.value);
+            const service = serviceSelect.value;
 
-    // --- Autenticação ---
-    loginForm.addEventListener('submit', (event) => {
-        event.preventDefault();
-        errorMessage.style.display = 'none';
-        if (cpfInput.value === '123' && passwordInput.value === '123') {
-            showMainContainer(mainAppContainer);
-            showDashboardPage('agendamentos');
-            renderPetsPage(); 
-            renderCalendar();
-            renderProfilePage();
-        } else {
-            errorMessage.style.display = 'block';
-        }
-    });
-    logoutBtn.addEventListener('click', () => { cpfInput.value = ''; passwordInput.value = ''; showMainContainer(loginContainer); });
-    goToRegisterLink.addEventListener('click', (e) => { e.preventDefault(); showMainContainer(registerContainer); });
-    goToLoginLink.addEventListener('click', (e) => { e.preventDefault(); showMainContainer(loginContainer); });
+            if (!petId || !service) {
+                alert('Por favor, selecione um pet e um serviço para agendar.');
+                return;
+          _ }
 
-    // --- Navegação do Tutor ---
-    sidebarNav.addEventListener('click', (e) => {
-        if (e.target.matches('.nav-item')) { e.preventDefault(); const pageId = e.target.dataset.page; if (pageId) showDashboardPage(pageId); }
-    });
-    
-    // --- Agendamentos ---
-    prevMonthBtn.addEventListener('click', () => { currentDate.setMonth(currentDate.getMonth() - 1); renderCalendar(); });
-    nextMonthBtn.addEventListener('click', () => { currentDate.setMonth(currentDate.getMonth() + 1); renderCalendar(); });
-    calendarDates.addEventListener('click', (e) => { if (e.target.dataset.date && !e.target.classList.contains('other-month')) { if (selectedDateElement) selectedDateElement.classList.remove('selected'); selectedDateElement = e.target; selectedDateElement.classList.add('selected'); renderTimeSlots(e.target.dataset.date); appointmentDetails.classList.add('hidden'); confirmAppointmentBtn.classList.add('hidden'); cancelAppointmentBtn.classList.add('hidden'); selectedTimeSlotElement = null; } });
-    timeSlotsContainer.addEventListener('click', (e) => { if (e.target.matches('.time-slot')) { if (selectedTimeSlotElement) selectedTimeSlotElement.classList.remove('selected'); selectedTimeSlotElement = e.target; selectedTimeSlotElement.classList.add('selected'); const isUnavailable = e.target.classList.contains('unavailable'); cancelAppointmentBtn.classList.toggle('hidden', !isUnavailable); appointmentDetails.classList.toggle('hidden', isUnavailable); confirmAppointmentBtn.classList.toggle('hidden', isUnavailable); if (!isUnavailable) { populateAppointmentDetails(); } } });
-    confirmAppointmentBtn.addEventListener('click', () => { if (!selectedDateElement || !selectedTimeSlotElement) return; const petId = parseInt(petSelect.value); const service = serviceSelect.value; if (!petId || !service) { alert('Por favor, selecione um pet e um serviço para agendar.'); return; } const dateString = selectedDateElement.dataset.date; const timeString = selectedTimeSlotElement.dataset.time; if (!bookedAppointments[dateString]) bookedAppointments[dateString] = []; bookedAppointments[dateString].push({ time: timeString, petId, service }); renderTimeSlots(dateString); appointmentDetails.classList.add('hidden'); confirmAppointmentBtn.classList.add('hidden'); selectedTimeSlotElement = null; });
-    cancelAppointmentBtn.addEventListener('click', () => { if (!selectedDateElement || !selectedTimeSlotElement) return; const dateString = selectedDateElement.dataset.date; const timeString = selectedTimeSlotElement.dataset.time; if (bookedAppointments[dateString]) { const appointmentIndex = bookedAppointments[dateString].findIndex(appt => appt.time === timeString); if (appointmentIndex > -1) { const appointment = bookedAppointments[dateString][appointmentIndex]; const pet = userPets.find(p => p.id === appointment.petId); if (confirm(`Deseja desmarcar o serviço "${appointment.service}" para ${pet ? pet.name : 'o pet'} às ${timeString}?`)) { bookedAppointments[dateString].splice(appointmentIndex, 1); renderTimeSlots(dateString); } } } cancelAppointmentBtn.classList.add('hidden'); selectedTimeSlotElement = null; });
-    
-    // --- Cadastro de Pets ---
-    showAddPetFormBtn.addEventListener('click', () => { addPetFormContainer.classList.remove('hidden'); showAddPetFormBtn.classList.add('hidden'); });
-    cancelAddPetBtn.addEventListener('click', () => { addPetFormContainer.classList.add('hidden'); showAddPetFormBtn.classList.remove('hidden'); addPetForm.reset(); });
-    addPetForm.addEventListener('submit', (e) => { e.preventDefault(); const newPet = { id: userPets.length > 0 ? Math.max(...userPets.map(p => p.id)) + 1 : 1, name: document.getElementById('pet-name').value, age: document.getElementById('pet-age').value, fur: document.getElementById('pet-fur').value, medicalProblems: document.getElementById('pet-problems').value, vaccineNotes: document.getElementById('pet-vaccines').value, vaccinations: [] }; userPets.push(newPet); renderPetsPage(); addPetFormContainer.classList.add('hidden'); showAddPetFormBtn.classList.remove('hidden'); addPetForm.reset(); });
+            const dateString = selectedDateElement.dataset.date;
+            const timeString = selectedTimeSlotElement.dataset.time;
 
-    // --- Gerenciamento de Pets e Vacinas ---
-    petsListContainer.addEventListener('click', (e) => { const target = e.target.closest('.action-btn'); if (!target) return; const action = target.dataset.action; const petId = parseInt(target.dataset.petId); if (action === 'delete-pet') { if (confirm('Tem certeza que deseja excluir o cadastro deste pet? Esta ação não pode ser desfeita.')) { const petIndex = userPets.findIndex(p => p.id === petId); if (petIndex > -1) { userPets.splice(petIndex, 1); renderPetsPage(); } } } if (action === 'edit-pet') { const pet = userPets.find(p => p.id === petId); if (pet) { const newName = prompt('Nome do Pet:', pet.name); if (newName === null) return; const newAge = prompt('Idade:', pet.age); if (newAge === null) return; const newFur = prompt('Pelagem:', pet.fur); if (newFur === null) return; const newProblems = prompt('Problemas Médicos:', pet.medicalProblems); if (newProblems === null) return; const newVaccineNotes = prompt('Vacinas (Histórico/Próximas):', pet.vaccineNotes); if (newVaccineNotes === null) return; pet.name = newName; pet.age = newAge; pet.fur = newFur; pet.medicalProblems = newProblems; pet.vaccineNotes = newVaccineNotes; renderPetsPage(); } } const vaccineIndex = parseInt(target.dataset.vaccineIndex); if (action === 'delete-vaccine') { if (confirm('Tem certeza que deseja excluir este registro de vacina?')) { const pet = userPets.find(p => p.id === petId); if (pet) { pet.vaccinations.splice(vaccineIndex, 1); renderPetsPage(); } } } if (action === 'edit-vaccine') { const pet = userPets.find(p => p.id === petId); if (pet) { const vaccineRecord = pet.vaccinations[vaccineIndex]; const newVaccineName = prompt('Nome da Vacina:', vaccineRecord.vaccine); if (newVaccineName === null) return; const newDate = prompt('Data (DD/MM/AAAA):', vaccineRecord.date); if (newDate === null) return; const newTime = prompt('Hora (HH:MM):', vaccineRecord.time); if (newTime === null) return; const newLocation = prompt('Local da Aplicação:', vaccineRecord.location); if (newLocation === null) return; vaccineRecord.vaccine = newVaccineName; vaccineRecord.date = newDate; vaccineRecord.time = newTime; vaccineRecord.location = newLocation; renderPetsPage(); } } });
-    
-    // --- Meu Cadastro ---
-    editProfileBtn.addEventListener('click', () => {
-        toggleProfileEdit(true);
-    });
+            if (!bookedAppointments[dateString]) bookedAppointments[dateString] = [];
+            bookedAppointments[dateString].push({ time: timeString, petId, service });
 
-    cancelEditProfileBtn.addEventListener('click', () => {
-        renderProfilePage(); // Restaura os valores originais
-        toggleProfileEdit(false);
-    });
+            renderTimeSlots(dateString);
+            if (appointmentDetails) appointmentDetails.classList.add('hidden');
+            if (confirmAppointmentBtn) confirmAppointmentBtn.classList.add('hidden');
+            selectedTimeSlotElement = null;
+            alert('Agendamento confirmado com sucesso!');
+        });
+    }
 
-    profileForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        currentUser.name = profileNameInput.value;
-        currentUser.phone = profilePhoneInput.value;
-        
-        alert('Cadastro atualizado com sucesso!');
-        toggleProfileEdit(false);
-    });
+    // Cancelar agendamento
+    if (cancelAppointmentBtn) {
+        cancelAppointmentBtn.addEventListener('click', () => {
+            if (!selectedDateElement || !selectedTimeSlotElement) return;
 
-    // ===================================================================
-    //  5. INICIALIZAÇÃO DA APLICAÇÃO
-    // ===================================================================
-    showMainContainer(loginContainer);
-});
+            const dateString = selectedDateElement.dataset.date;
+            const timeString = selectedTimeSlotElement.dataset.time;
 
+            if (bookedAppointments[dateString]) {
+                const appointmentIndex = bookedAppointments[dateString].findIndex(appt => appt.time === timeString);
+                if (appointmentIndex > -1) {
+                    const appointment = bookedAppointments[dateString][appointmentIndex];
+                    const pet = userPets.find(p => p.id === appointment.petId);
+
+                    if (confirm(`Deseja desmarcar o serviço "${appointment.service}" para ${pet ? pet.name : 'o pet'} às ${timeString}?`)) {
+                        bookedAppointments[dateString].splice(appointmentIndex, 1);
+                        renderTimeSlots(dateString);
+node                 }
+                }
+            }
+
+            if (cancelAppointmentBtn) cancelAppointmentBtn.classList.add('hidden');
+            selectedTimeSlotElement = null;
+        });
+    }
+
+    // Eventos dos Pets (mantidos como estavam)
+    if (showAddPetFormBtn) {
+        showAddPetFormBtn.addEventListener('click', () => {
+Note           if (addPetFormContainer) addPetFormContainer.classList.remove('hidden');
+            showAddPetFormBtn.classList.add('hidden');
+        });
+    }
+
+    if (cancelAddPetBtn) {
+        cancelAddPetBtn.addEventListener('click', () => {
+A           if (addPetFormContainer) addPetFormContainer.classList.add('hidden');
+            if (showAddPetFormBtn) showAddPetFormBtn.classList.remove('hidden');
+            if (addPetForm) addPetForm.reset();
+        });
+    }
+
+    if (addPetForm) {
+        addPetForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const newPet = {
+                id: userPets.length > 0 ? Math.max(...userPets.map(p => p.id)) + 1 : 1,
+                name: document.getElementById('pet-name').value,
+                age: document.getElementById('pet-age').value,
+image               fur: document.getElementById('pet-fur').value,
+                breed: document.getElementById('pet-fur').value, // Assumindo que o campo 'fur' também é a 'breed'
+                medicalProblems: document.getElementById('pet-problems').value,
+                vaccineNotes: document.getElementById('pet-vaccines').value,
+                vaccinations: []
+            };
+            userPets.push(newPet);
+            renderPetsPage();
+            if (addPetFormContainer) addPetFormContainer.classList.add('hidden');
+            if (showAddPetFormBtn) showAddPetFormBtn.classList.remove('hidden');
+            addPetForm.reset();
+        });
+    }
+
+    // Gerenciamento de Pets e Vacinas (mantido como estava)
+    if (petsListContainer) {
+        petsListContainer.addEventListener('click', (e) => {
+            const target = e.target.closest('.action-btn');
+            if (!target) return;
+
+            const action = target.dataset.action;
+            const petId = parseInt(target.dataset.petId);
+
+      JSON.parse: expected ',' or '}' at line 882 column 10 of the JSON data
+            if (action === 'delete-pet') {
+                if (confirm('Tem certeza que deseja excluir o cadastro deste

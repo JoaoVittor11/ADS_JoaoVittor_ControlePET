@@ -1,22 +1,16 @@
 import express from 'express';
 import dotenv from 'dotenv';
+import cors from 'cors'; // 1. Importa a biblioteca cors
 
-// ALTERAÇÃO PRINCIPAL: Carrega o dotenv ANTES de qualquer outra importação do nosso código
 dotenv.config();
 
-// Agora sim, importa os outros módulos
 import './config/database'; 
 import tutorRoutes from './routes/tutorRoutes';
 
 const app = express();
-// Garante que a porta seja lida corretamente do .env, com um padrão seguro.
 const port = process.env.PORT || 3333;
 
-// ======================= DEBUG =======================
-// Esta linha vai nos mostrar qual porta estamos realmente tentando usar
-console.log(`[DEBUG] Tentando iniciar o servidor na porta: ${port}`);
-// =====================================================
-
+app.use(cors()); // 2. Habilita o CORS para todas as rotas
 app.use(express.json());
 
 app.get('/', (req, res) => {

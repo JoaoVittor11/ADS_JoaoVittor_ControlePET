@@ -1,10 +1,13 @@
 import { Router } from 'express';
-// Importa a função específica do arquivo do controlador
-import { cadastrarTutor } from '../controllers/tutorController';
+import { cadastrarTutor, loginTutor, getPerfilTutor } from '../controllers/tutorController';
+import { proteger } from '../middlewares/authMiddleware';
 
 const router = Router();
 
 router.post('/cadastro', cadastrarTutor);
+router.post('/login', loginTutor);
 
-// Exporta o roteador como padrão
+// Rota GET para o perfil, protegida pelo middleware 'proteger'
+router.get('/perfil', proteger, getPerfilTutor);
+
 export default router;
