@@ -2,66 +2,207 @@ import { Request, Response } from 'express';
 import pool from '../config/database';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { AuthRequest } from '../middlewares/authMiddleware'; 
+import { AuthRequest } from '../middlewares/authMiddleware';
 
+// ============================================
+// FUNÇÃO DE CADASTRO DO TUTOR (SEM PET)
+// ============================================
 export const cadastrarTutor = async (req: Request, res: Response) => {
-    // ... código existente ...
+    try {
+        const {
+            nome_completo,
+            telefone,
+            endereco,
+            cpf,
+            email,
+            senha,
+            confirm_password
+        } = req.body;
+
+        console.log('[DEBUG CADASTRO TUTOR] Dados recebidos:', { nome_completo, cpf, email });
+
+        if (!nome_completo || !cpf || !email || !senha) {
+            console.log('[DEBUG CADASTRO TUTOR] Erro: Campos obrigatórios não preenchidos.');
+            return res.status(400).json({ message: 'Preencha todos os campos obrigatórios.' });
+        }
+
+        if (senha !== confirm_password) {
+            console.log('[DEBUG CADASTRO TUTOR] Erro: Senhas não conferem.');
+            return res.status(400).json({ message: 'As senhas não conferem.' });
+        }
+
+        const tutorExistente = await pool.query(
+            'SELECT * FROM tutores WHERE cpf = $1', [cpf]
+        );
+
+        if (tutorExistente.rows.length > 0) {
+            console.log(`[DEBUG CADASTRO TUTOR] Erro: CPF ${cpf} já cadastrado.`);
+            return res.status(400).json({ message: 'CPF já cadastrado.' });
+        }
+
+        const senhaHash = await bcrypt.hash(senha, 10);
+
+        const queryTutor = `
+            INSERT INTO tutores (nome_completo, telefone, endereco, cpf, email, senha)
+            VALUES ($1, $2, $3, $4, $5, $6)
+            RETURNING id, nome_completo, cpf, email
+        `;
+        
+        const resultTutor = await pool.query(queryTutor, [
+            nome_completo,
+            telefone || '',
+            endereco || '',
+            cpf,
+            email,
+            senhaHash
+        ]);
+
+        console.log('[DEBUG CADASTRO TUTOR] Tutor cadastrado com sucesso!');
+        res.status(201).json({
+            message: 'Cadastro realizado com sucesso!',
+            tutor: resultTutor.rows[0]
+        });
+
+    } catch (error: any) {
+        console.error('[DEBUG CADASTRO TUTOR] Erro:', error.message);
+        res.status(500).json({ message: `Erro ao cadastrar: ${error.message}` });
+    }
 };
 
 // ============================================
-// FUNÇÃO DE LOGIN COM DEBUG ADICIONADO
+// FUNÇÃO DE CADASTRO DE PET (APÓS LOGIN)
+// ============================================
+export const cadastrarPet = async (req: AuthRequest, res: Response) => {
+    try {
+        const tutorId = req.user?.id;
+
+        if (!tutorId) {
+            console.log('[DEBUG CADASTRO PET] Erro: Usuário não autenticado.');
+            return res.status(401).json({ message: 'Usuário não autenticado.' });
+        }
+
+        const { nome, idade, pelagem, problemas_medicos, notas_vacinacao } = req.body;
+
+        console.log('[DEBUG CADASTRO PET] Dados recebidos:', { nome, idade, tutorId });
+
+        if (!nome) {
+            console.log('[DEBUG CADASTRO PET] Erro: Nome do pet é obrigatório.');
+            return res.status(400).json({ message: 'Nome do pet é obrigatório.' });
+        }
+
+        console.log(`[DEBUG CADASTRO PET] Inserindo pet: ${nome} para tutor ID: ${tutorId}`);
+
+        const queryPet = `
+            INSERT INTO pets (id_tutor, nome, idade, pelagem, problemas_medicos, notas_vacinacao)
+            VALUES ($1, $2, $3, $4, $5, $6)
+            RETURNING id, nome, idade, pelagem, problemas_medicos, notas_vacinacao
+        `;
+        
+        try {
+            const resultPet = await pool.query(queryPet, [
+                tutorId,
+                nome,
+                idade || '',
+                pelagem || '',
+                problemas_medicos || '',
+                notas_vacinacao || ''
+            ]);
+
+            console.log(`[DEBUG CADASTRO PET] Pet inserido com sucesso! ID: ${resultPet.rows[0].id}`);
+            res.status(201).json({
+                message: 'Pet cadastrado com sucesso!',
+                pet: resultPet.rows[0]
+            });
+        } catch (dbError: any) {
+            console.error('[DEBUG CADASTRO PET] Erro de banco de dados:', dbError.message);
+            console.error('[DEBUG CADASTRO PET] Detalhes:', dbError);
+            res.status(500).json({ message: `Erro ao cadastrar pet: ${dbError.message}` });
+        }
+
+    } catch (error: any) {
+        console.error('[DEBUG CADASTRO PET] Erro geral:', error.message);
+        res.status(500).json({ message: `Erro ao cadastrar pet: ${error.message}` });
+    }
+};
+
+// ============================================
+// FUNÇÃO DE LOGIN
 // ============================================
 export const loginTutor = async (req: Request, res: Response) => {
-    const { cpf, senha } = req.body; 
-    console.log(`[DEBUG LOGIN] Tentativa de login recebida para CPF: ${cpf}`); // LOG 1
+    const { cpf, senha } = req.body;
+    console.log(`[DEBUG LOGIN] Tentativa de login recebida para CPF: ${cpf}`);
 
     if (!cpf || !senha) {
-        console.log('[DEBUG LOGIN] Erro: CPF ou senha não fornecidos.'); // LOG 2
+        console.log('[DEBUG LOGIN] Erro: CPF ou senha não fornecidos.');
         return res.status(400).json({ message: 'CPF e senha são obrigatórios.' });
     }
 
     try {
-        const query = 'SELECT * FROM Tutores WHERE cpf = $1';
-        console.log(`[DEBUG LOGIN] Executando query: ${query} com CPF: ${cpf}`); // LOG 3
+        const query = 'SELECT * FROM tutores WHERE cpf = $1';
+        console.log(`[DEBUG LOGIN] Executando query com CPF: ${cpf}`);
         const resultado = await pool.query(query, [cpf]);
 
         if (resultado.rows.length === 0) {
-            console.log(`[DEBUG LOGIN] Erro: Nenhum tutor encontrado para o CPF: ${cpf}`); // LOG 4
-            return res.status(401).json({ message: 'CPF ou Senha inválidos.' }); 
-        }
-
-        const tutor = resultado.rows[0];
-        console.log('[DEBUG LOGIN] Tutor encontrado:', { id: tutor.id, nome: tutor.nome_completo, cpf: tutor.cpf }); // LOG 5 (Não logar a senha hash)
-
-        // Compara a senha enviada com a senha criptografada no banco
-        console.log('[DEBUG LOGIN] Comparando senha fornecida com a senha no banco...'); // LOG 6
-        const senhaCorreta = await bcrypt.compare(senha, tutor.senha);
-        console.log(`[DEBUG LOGIN] Resultado da comparação de senha: ${senhaCorreta}`); // LOG 7
-
-        if (!senhaCorreta) {
-            console.log('[DEBUG LOGIN] Erro: Senha incorreta.'); // LOG 8
+            console.log(`[DEBUG LOGIN] Erro: Nenhum tutor encontrado para o CPF: ${cpf}`);
             return res.status(401).json({ message: 'CPF ou Senha inválidos.' });
         }
 
-        console.log('[DEBUG LOGIN] Senha correta. Gerando token...'); // LOG 9
-        const payload = { id: tutor.id, cpf: tutor.cpf }; 
+        const tutor = resultado.rows[0];
+        console.log('[DEBUG LOGIN] Tutor encontrado:', { id: tutor.id, nome: tutor.nome_completo });
+
+        console.log('[DEBUG LOGIN] Comparando senhas...');
+        const senhaCorreta = await bcrypt.compare(senha, tutor.senha);
+        console.log(`[DEBUG LOGIN] Resultado da comparação de senha: ${senhaCorreta}`);
+
+        if (!senhaCorreta) {
+            console.log('[DEBUG LOGIN] Erro: Senha incorreta.');
+            return res.status(401).json({ message: 'CPF ou Senha inválidos.' });
+        }
+
+        console.log('[DEBUG LOGIN] Senha correta. Gerando token...');
+        const payload = { id: tutor.id, cpf: tutor.cpf };
         const secret = process.env.JWT_SECRET || 'fallback_secret';
         const token = jwt.sign(payload, secret, { expiresIn: '8h' });
 
-        res.status(200).json({ 
-            message: 'Login bem-sucedido!', 
-            tutor: { id: tutor.id, nome: tutor.nome_completo, cpf: tutor.cpf }, 
+        console.log('[DEBUG LOGIN] Token gerado com sucesso!');
+        res.status(200).json({
+            message: 'Login bem-sucedido!',
+            tutor: { id: tutor.id, nome: tutor.nome_completo, cpf: tutor.cpf },
             token: token
         });
 
-    } catch (error) {
-        console.error('[DEBUG LOGIN] Erro inesperado durante o login:', error); // LOG 10
+    } catch (error: any) {
+        console.error('[DEBUG LOGIN] Erro inesperado durante o login:', error.message);
         res.status(500).json({ message: 'Erro interno do servidor.' });
     }
 };
 
-// Função de perfil (mantém como está por enquanto)
+// ============================================
+// FUNÇÃO DE PERFIL
+// ============================================
 export const getPerfilTutor = async (req: AuthRequest, res: Response) => {
-    // ... código existente ...
-};
+    try {
+        const tutorId = req.user?.id;
 
+        if (!tutorId) {
+            console.log('[DEBUG PERFIL] Erro: Usuário não autenticado.');
+            return res.status(401).json({ message: 'Usuário não autenticado.' });
+        }
+
+        console.log(`[DEBUG PERFIL] Buscando perfil do tutor ID: ${tutorId}`);
+        const query = 'SELECT * FROM tutores WHERE id = $1';
+        const resultado = await pool.query(query, [tutorId]);
+
+        if (resultado.rows.length === 0) {
+            console.log(`[DEBUG PERFIL] Erro: Tutor não encontrado para ID: ${tutorId}`);
+            return res.status(404).json({ message: 'Tutor não encontrado' });
+        }
+
+        console.log('[DEBUG PERFIL] Perfil encontrado com sucesso!');
+        res.status(200).json(resultado.rows[0]);
+
+    } catch (error: any) {
+        console.error('[DEBUG PERFIL] Erro inesperado ao buscar perfil:', error.message);
+        res.status(500).json({ message: 'Erro ao buscar perfil' });
+    }
+};
