@@ -39,7 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const confirmAppointmentBtn = document.getElementById('confirm-appointment-btn');
     const cancelAppointmentBtn = document.getElementById('cancel-appointment-btn');
 
-    // Página "Meu Cadastro" (ATUALIZADO - SEM CPF)
+    // Página "Meu Cadastro"
     const profileForm = document.getElementById('profile-form');
     const profileNameInput = document.getElementById('profile-name');
     const profilePhoneInput = document.getElementById('profile-phone');
@@ -99,7 +99,7 @@ document.addEventListener('DOMContentLoaded', () => {
             renderProfilePage();
         }
         if (pageId === 'meus-pets') {
-            renderPetsPage();
+            carregarPets();
         }
     }
 
@@ -136,13 +136,14 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <span>Idade: ${pet.idade}</span>
                             </div>
                             <div class="pet-card-actions">
+                                <button class="action-btn btn-edit" data-action="edit-pet" data-pet-id="${pet.id}">Editar Pet</button>
                                 <button class="action-btn btn-delete" data-action="delete-pet" data-pet-id="${pet.id}">Excluir Pet</button>
                             </div>
                         </div>
                         <div class="pet-card-info">
                             <p><strong>Pelagem:</strong> ${pet.pelagem}</p>
                             <p><strong>Problemas Médicos:</strong> ${pet.problemas_medicos}</p>
-                            <p><strong>Vacinas:</strong> ${pet.notas_vacinacao}</p>
+                            <p><strong>Vacinas:</strong> ${pet.notas_vacinas}</p>
                         </div>
                     </div>`;
                 petsListContainer.insertAdjacentHTML('beforeend', petCardHTML);
@@ -507,8 +508,32 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ===================================================================
-    //  7. PETS - CADASTRO
+    //  7. PETS - CADASTRO E EDIÇÃO
     // ===================================================================
+    
+    // Carregar pets ao abrir a aba
+    async function carregarPets() {
+        const token = localStorage.getItem('authToken');
+        if (!token) return;
+
+        try {
+            const response = await fetch(`${API_URL}/api/tutores/pets`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            const result = await response.json();
+            if (response.ok) {
+                userPets = result.pets;
+                renderPetsPage();
+            }
+        } catch (error) {
+            console.error('[DEBUG PETS] Erro ao carregar:', error);
+        }
+    }
+
     if (showAddPetFormBtn) {
         showAddPetFormBtn.addEventListener('click', () => {
             if (addPetFormContainer) addPetFormContainer.classList.remove('hidden');
@@ -539,7 +564,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 idade: document.getElementById('pet-age').value,
                 pelagem: document.getElementById('pet-fur').value,
                 problemas_medicos: document.getElementById('pet-problems').value,
-                notas_vacinacao: document.getElementById('pet-vaccines').value
+                notas_vacinas: document.getElementById('pet-vaccines').value
             };
 
             try {
@@ -559,8 +584,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 alert('Pet cadastrado com sucesso!');
-                userPets.push(result.pet);
-                renderPetsPage();
+                carregarPets();
                 addPetForm.reset();
                 if (addPetFormContainer) addPetFormContainer.classList.add('hidden');
                 if (showAddPetFormBtn) showAddPetFormBtn.classList.remove('hidden');
@@ -571,19 +595,80 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (petsListContainer) {
-        petsListContainer.addEventListener('click', (e) => {
+        petsListContainer.addEventListener('click', async (e) => {
             const target = e.target.closest('.action-btn');
             if (!target) return;
 
             const action = target.dataset.action;
             const petId = parseInt(target.dataset.petId);
+            const token = localStorage.getItem('authToken');
 
             if (action === 'delete-pet') {
                 if (confirm('Tem certeza que deseja excluir este pet?')) {
-                    const petIndex = userPets.findIndex(p => p.id === petId);
-                    if (petIndex > -1) {
-                        userPets.splice(petIndex, 1);
-                        renderPetsPage();
+                    try {
+                        const response = await fetch(`${API_URL}/api/tutores/pets/${petId}`, {
+                            method: 'DELETE',
+                            headers: {
+                                'Authorization': `Bearer ${token}`
+                            }
+                        });
+
+                        const result = await response.json();
+
+                        if (!response.ok) {
+                            throw new Error(result.message || 'Erro ao deletar pet.');
+                        }
+
+                        alert('Pet deletado com sucesso!');
+                        carregarPets();
+                    } catch (error) {
+                        alert(`Erro ao deletar: ${error.message}`);
+                    }
+                }
+            }
+
+            if (action === 'edit-pet') {
+                const pet = userPets.find(p => p.id === petId);
+                if (pet) {
+                    const nome = prompt('Nome do Pet:', pet.nome);
+                    if (nome === null) return;
+                    const idade = prompt('Idade:', pet.idade);
+                    if (idade === null) return;
+                    const pelagem = prompt('Pelagem:', pet.pelagem);
+                    if (pelagem === null) return;
+                    const problemas = prompt('Problemas Médicos:', pet.problemas_medicos);
+                    if (problemas === null) return;
+                    const vacinas = prompt('Notas de Vacinação:', pet.notas_vacinas);
+                    if (vacinas === null) return;
+
+                    const petData = {
+                        nome,
+                        idade,
+                        pelagem,
+                        problemas_medicos: problemas,
+                        notas_vacinas: vacinas
+                    };
+
+                    try {
+                        const response = await fetch(`${API_URL}/api/tutores/pets/${petId}`, {
+                            method: 'PUT',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${token}`
+                            },
+                            body: JSON.stringify(petData)
+                        });
+
+                        const result = await response.json();
+
+                        if (!response.ok) {
+                            throw new Error(result.message || 'Erro ao atualizar pet.');
+                        }
+
+                        alert('Pet atualizado com sucesso!');
+                        carregarPets();
+                    } catch (error) {
+                        alert(`Erro ao atualizar: ${error.message}`);
                     }
                 }
             }

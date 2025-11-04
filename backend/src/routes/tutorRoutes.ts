@@ -4,23 +4,37 @@ import {
     loginTutor, 
     getPerfilTutor, 
     cadastrarPet,
-    atualizarPerfilTutor
+    atualizarPerfilTutor,
+    listarPetsTutor,
+    atualizarPet,
+    deletarPet
 } from '../controllers/tutorController';
 import { proteger } from '../middlewares/authMiddleware';
 
 const router = Router();
 
-// Cadastro
+// ============================================
+// CADASTRO
+// ============================================
 router.post('/cadastro', cadastrarTutor);
 
-// Login
+// ============================================
+// LOGIN
+// ============================================
 router.post('/login', loginTutor);
 
-// Perfil - GET e PUT
+// ============================================
+// PERFIL - GET e PUT
+// ============================================
 router.get('/perfil', proteger, getPerfilTutor);
 router.put('/perfil', proteger, atualizarPerfilTutor);
 
-// Pets
-router.post('/pets', proteger, cadastrarPet);
+// ============================================
+// PETS - CRUD COMPLETO
+// ============================================
+router.post('/pets', proteger, cadastrarPet);           // Criar pet
+router.get('/pets', proteger, listarPetsTutor);         // Listar pets
+router.put('/pets/:petId', proteger, atualizarPet);     // Atualizar pet
+router.delete('/pets/:petId', proteger, deletarPet);    // Deletar pet
 
 export default router;

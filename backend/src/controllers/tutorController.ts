@@ -21,7 +21,6 @@ export const cadastrarTutor = async (req: Request, res: Response) => {
 
         console.log('[DEBUG CADASTRO TUTOR] Dados recebidos:', { nome_completo, cpf, email });
 
-        // Validação com trim
         if (!nome_completo?.trim() || !cpf?.trim() || !email?.trim() || !senha?.trim()) {
             console.log('[DEBUG CADASTRO TUTOR] Erro: Campos obrigatórios não preenchidos.');
             return res.status(400).json({ message: 'Preencha todos os campos obrigatórios.' });
@@ -82,7 +81,7 @@ export const cadastrarPet = async (req: AuthRequest, res: Response) => {
             return res.status(401).json({ message: 'Usuário não autenticado.' });
         }
 
-        const { nome, idade, pelagem, problemas_medicos, notas_vacinacao } = req.body;
+        const { nome, idade, pelagem, problemas_medicos, notas_vacinas } = req.body;
 
         console.log('[DEBUG CADASTRO PET] Dados recebidos:', { nome, idade, tutorId });
 
@@ -94,9 +93,9 @@ export const cadastrarPet = async (req: AuthRequest, res: Response) => {
         console.log(`[DEBUG CADASTRO PET] Inserindo pet: ${nome} para tutor ID: ${tutorId}`);
 
         const queryPet = `
-            INSERT INTO pets (id_tutor, nome, idade, pelagem, problemas_medicos, notas_vacinacao)
+            INSERT INTO pets (id_tutor, nome, idade, pelagem, problemas_medicos, notas_vacinas)
             VALUES ($1, $2, $3, $4, $5, $6)
-            RETURNING id, nome, idade, pelagem, problemas_medicos, notas_vacinacao
+            RETURNING id, nome, idade, pelagem, problemas_medicos, notas_vacinas
         `;
         
         try {
@@ -106,7 +105,7 @@ export const cadastrarPet = async (req: AuthRequest, res: Response) => {
                 (idade || '').trim(),
                 (pelagem || '').trim(),
                 (problemas_medicos || '').trim(),
-                (notas_vacinacao || '').trim()
+                (notas_vacinas || '').trim()
             ]);
 
             console.log(`[DEBUG CADASTRO PET] Pet inserido com sucesso! ID: ${resultPet.rows[0].id}`);
@@ -123,6 +122,169 @@ export const cadastrarPet = async (req: AuthRequest, res: Response) => {
     } catch (error: any) {
         console.error('[DEBUG CADASTRO PET] Erro geral:', error.message);
         res.status(500).json({ message: `Erro ao cadastrar pet: ${error.message}` });
+    }
+};
+
+// ============================================
+// FUNÇÃO DE LISTAR PETS DO TUTOR
+// ============================================
+export const listarPetsTutor = async (req: AuthRequest, res: Response) => {
+    try {
+        const tutorId = req.user?.id;
+
+        if (!tutorId) {
+            console.log('[DEBUG LISTAR PETS] Erro: Usuário não autenticado.');
+            return res.status(401).json({ message: 'Usuário não autenticado.' });
+        }
+
+        console.log(`[DEBUG LISTAR PETS] Buscando pets do tutor ID: ${tutorId}`);
+
+        const query = `
+            SELECT id, id_tutor, nome, idade, pelagem, problemas_medicos, notas_vacinas
+            FROM pets
+            WHERE id_tutor = $1
+            ORDER BY nome
+        `;
+
+        const resultado = await pool.query(query, [tutorId]);
+
+        console.log(`[DEBUG LISTAR PETS] ${resultado.rows.length} pets encontrados`);
+        res.status(200).json({
+            message: 'Pets recuperados com sucesso!',
+            pets: resultado.rows
+        });
+
+    } catch (error: any) {
+        console.error('[DEBUG LISTAR PETS] Erro:', error.message);
+        res.status(500).json({ message: `Erro ao listar pets: ${error.message}` });
+    }
+};
+
+// ============================================
+// FUNÇÃO DE ATUALIZAR PET
+// ============================================
+export const atualizarPet = async (req: AuthRequest, res: Response) => {
+    try {
+        const tutorId = req.user?.id;
+        const { petId } = req.params;
+
+        if (!tutorId) {
+            console.log('[DEBUG ATUALIZAR PET] Erro: Usuário não autenticado.');
+            return res.status(401).json({ message: 'Usuário não autenticado.' });
+        }
+
+        if (!petId) {
+            console.log('[DEBUG ATUALIZAR PET] Erro: ID do pet não fornecido.');
+            return res.status(400).json({ message: 'ID do pet é obrigatório.' });
+        }
+
+        const { nome, idade, pelagem, problemas_medicos, notas_vacinas } = req.body;
+
+        console.log(`[DEBUG ATUALIZAR PET] Atualizando pet ID: ${petId} do tutor ID: ${tutorId}`);
+        console.log('[DEBUG ATUALIZAR PET] Dados recebidos:', { nome, idade, pelagem, problemas_medicos, notas_vacinas });
+
+        if (!nome?.trim()) {
+            console.log('[DEBUG ATUALIZAR PET] Erro: Nome do pet é obrigatório.');
+            return res.status(400).json({ message: 'Nome do pet é obrigatório.' });
+        }
+
+        const nomeTrimmed = nome?.trim();
+        const idadeTrimmed = idade?.trim() || '';
+        const pelagemTrimmed = pelagem?.trim() || '';
+        const problemasTrimmed = problemas_medicos?.trim() || '';
+        const vacinasTrimmed = notas_vacinas?.trim() || '';
+
+        const verificarPet = await pool.query(
+            'SELECT * FROM pets WHERE id = $1 AND id_tutor = $2',
+            [petId, tutorId]
+        );
+
+        if (verificarPet.rows.length === 0) {
+            console.log(`[DEBUG ATUALIZAR PET] Erro: Pet ${petId} não encontrado ou não pertence ao tutor.`);
+            return res.status(404).json({ message: 'Pet não encontrado.' });
+        }
+
+        const query = `
+            UPDATE pets
+            SET nome = $1, idade = $2, pelagem = $3, problemas_medicos = $4, notas_vacinas = $5
+            WHERE id = $6 AND id_tutor = $7
+            RETURNING id, id_tutor, nome, idade, pelagem, problemas_medicos, notas_vacinas
+        `;
+
+        try {
+            const resultado = await pool.query(query, [
+                nomeTrimmed,
+                idadeTrimmed,
+                pelagemTrimmed,
+                problemasTrimmed,
+                vacinasTrimmed,
+                petId,
+                tutorId
+            ]);
+
+            console.log('[DEBUG ATUALIZAR PET] Pet atualizado com sucesso!');
+            res.status(200).json({
+                message: 'Pet atualizado com sucesso!',
+                pet: resultado.rows[0]
+            });
+        } catch (dbError: any) {
+            console.error('[DEBUG ATUALIZAR PET] Erro de banco de dados:', dbError.message);
+            res.status(500).json({ message: `Erro de banco: ${dbError.message}` });
+        }
+
+    } catch (error: any) {
+        console.error('[DEBUG ATUALIZAR PET] Erro inesperado:', error.message);
+        res.status(500).json({ message: `Erro ao atualizar pet: ${error.message}` });
+    }
+};
+
+// ============================================
+// FUNÇÃO DE DELETAR PET
+// ============================================
+export const deletarPet = async (req: AuthRequest, res: Response) => {
+    try {
+        const tutorId = req.user?.id;
+        const { petId } = req.params;
+
+        if (!tutorId) {
+            console.log('[DEBUG DELETAR PET] Erro: Usuário não autenticado.');
+            return res.status(401).json({ message: 'Usuário não autenticado.' });
+        }
+
+        if (!petId) {
+            console.log('[DEBUG DELETAR PET] Erro: ID do pet não fornecido.');
+            return res.status(400).json({ message: 'ID do pet é obrigatório.' });
+        }
+
+        console.log(`[DEBUG DELETAR PET] Deletando pet ID: ${petId} do tutor ID: ${tutorId}`);
+
+        const verificarPet = await pool.query(
+            'SELECT * FROM pets WHERE id = $1 AND id_tutor = $2',
+            [petId, tutorId]
+        );
+
+        if (verificarPet.rows.length === 0) {
+            console.log(`[DEBUG DELETAR PET] Erro: Pet ${petId} não encontrado ou não pertence ao tutor.`);
+            return res.status(404).json({ message: 'Pet não encontrado.' });
+        }
+
+        const query = 'DELETE FROM pets WHERE id = $1 AND id_tutor = $2';
+
+        try {
+            await pool.query(query, [petId, tutorId]);
+
+            console.log('[DEBUG DELETAR PET] Pet deletado com sucesso!');
+            res.status(200).json({
+                message: 'Pet deletado com sucesso!'
+            });
+        } catch (dbError: any) {
+            console.error('[DEBUG DELETAR PET] Erro de banco de dados:', dbError.message);
+            res.status(500).json({ message: `Erro de banco: ${dbError.message}` });
+        }
+
+    } catch (error: any) {
+        console.error('[DEBUG DELETAR PET] Erro inesperado:', error.message);
+        res.status(500).json({ message: `Erro ao deletar pet: ${error.message}` });
     }
 };
 
@@ -232,7 +394,6 @@ export const atualizarPerfilTutor = async (req: AuthRequest, res: Response) => {
         console.log(`[DEBUG PERFIL UPDATE] Atualizando perfil do tutor ID: ${tutorId}`);
         console.log('[DEBUG PERFIL UPDATE] Dados recebidos (antes do trim):', { nome_completo, email, telefone, endereco });
 
-        // Aplicar trim em todos os campos
         const nomeTrimmed = nome_completo?.trim();
         const emailTrimmed = email?.trim();
         const telefoneTrimmed = telefone?.trim();
