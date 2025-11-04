@@ -37,7 +37,7 @@
         </section>
     </main>
 
-    <!-- REGISTRO COM PET INTEGRADO -->
+    <!-- REGISTRO (SEM PET) -->
     <main id="register-container" class="container hidden">
         <section class="auth-page">
             <div class="auth-header">
@@ -45,8 +45,6 @@
                 <p>Preencha os dados para começar.</p>
             </div>
             <form id="register-form">
-                <!-- SEÇÃO DO TUTOR -->
-                <h3>Dados do Tutor</h3>
                 <div class="form-group">
                     <label for="reg-name">Nome Completo</label>
                     <input type="text" id="reg-name" name="nome_completo" required>
@@ -75,36 +73,7 @@
                     <label for="reg-confirm-password">Confirmar Senha</label>
                     <input type="password" id="reg-confirm-password" name="confirm_password" placeholder="Confirme sua senha" required>
                 </div>
-
-                <!-- SEÇÃO DO PET -->
-                <hr style="margin: 30px 0; border: none; border-top: 2px solid #e0e0e0;">
-                <h3>Dados do Pet (Opcional)</h3>
-                <div class="form-group">
-                    <label for="pet-nome-reg">Nome do Animal</label>
-                    <input type="text" id="pet-nome-reg" name="pet_nome">
-                </div>
-                <div class="form-group">
-                    <label for="pet-idade-reg">Idade</label>
-                    <input type="text" id="pet-idade-reg" name="pet_idade">
-                </div>
-                <div class="form-group">
-                    <label for="pet-pelagem-reg">Pelagem</label>
-                    <input type="text" id="pet-pelagem-reg" name="pet_pelagem">
-                </div>
-                <div class="form-group">
-                    <label for="pet-raca-reg">Raça</label>
-                    <input type="text" id="pet-raca-reg" name="pet_raca">
-                </div>
-                <div class="form-group">
-                    <label for="pet-problemas-reg">Problemas Médicos</label>
-                    <textarea id="pet-problemas-reg" name="pet_problemas" rows="3"></textarea>
-                </div>
-                <div class="form-group">
-                    <label for="pet-vacinas-reg">Vacinas (Histórico/Futuras)</label>
-                    <textarea id="pet-vacinas-reg" name="pet_vacinas" rows="3"></textarea>
-                </div>
-
-                <button type="submit" class="btn">Cadastrar Tutor e Pet</button>
+                <button type="submit" class="btn">Cadastrar</button>
             </form>
             <div class="auth-footer">
                 <p>Já tem uma conta? <a href="#" id="go-to-login">Faça login</a></p>
@@ -171,7 +140,7 @@
             </section>
         </main>
         
-        <!-- MEUS PETS -->
+        <!-- MEUS PETS (COM FORMULÁRIO DE CADASTRO) -->
         <main id="meus-pets-page" class="dashboard-page hidden">
             <section class="dashboard">
                 <header class="dashboard-header">
@@ -183,29 +152,28 @@
                     <button id="show-add-pet-form-btn" class="btn btn-secondary">Adicionar Novo Pet</button>
                 </div>
 
+                <!-- FORMULÁRIO DE CADASTRO DE PET -->
                 <div id="add-pet-form-container" class="pet-card hidden">
                     <h3>Cadastrar Novo Pet</h3>
                     <form id="add-pet-form">
-                        <div class="form-grid">
-                            <div class="form-group">
-                                <label for="pet-name">Nome do Animal</label>
-                                <input type="text" id="pet-name" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="pet-age">Idade</label>
-                                <input type="text" id="pet-age" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="pet-fur">Pelagem</label>
-                                <input type="text" id="pet-fur" required>
-                            </div>
+                        <div class="form-group">
+                            <label for="pet-name">Nome do Animal</label>
+                            <input type="text" id="pet-name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="pet-age">Idade</label>
+                            <input type="text" id="pet-age" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="pet-fur">Pelagem</label>
+                            <input type="text" id="pet-fur" required>
                         </div>
                         <div class="form-group">
                             <label for="pet-problems">Problemas Médicos</label>
                             <textarea id="pet-problems" rows="3"></textarea>
                         </div>
                         <div class="form-group">
-                            <label for="pet-vaccines">Vacinas (Histórico e Futuras)</label>
+                            <label for="pet-vaccines">Notas de Vacinação</label>
                             <textarea id="pet-vaccines" rows="4"></textarea>
                         </div>
                         <div class="form-actions">
@@ -215,16 +183,17 @@
                     </form>
                 </div>
 
+                <!-- LISTA DE PETS -->
                 <div id="pets-list-container"></div>
             </section>
         </main>
 
-        <!-- MEU CADASTRO -->
+        <!-- MEU CADASTRO (EDITÁVEL - SEM CPF) -->
         <main id="meu-cadastro-page" class="dashboard-page hidden">
             <section class="dashboard">
                 <header class="dashboard-header">
                     <h1>Meu Cadastro</h1>
-                    <p>Visualize e edite suas informações pessoais e do seu pet principal.</p>
+                    <p>Visualize e edite suas informações pessoais.</p>
                 </header>
     
                 <div class="profile-card pet-card">
@@ -232,27 +201,19 @@
                         <div class="form-grid">
                             <div class="form-group">
                                 <label for="profile-name">Nome Completo</label>
-                                <input type="text" id="profile-name">
+                                <input type="text" id="profile-name" readonly>
                             </div>
                             <div class="form-group">
                                 <label for="profile-email">E-mail</label>
-                                <input type="email" id="profile-email">
-                            </div>
-                            <div class="form-group">
-                                <label for="profile-cpf">CPF</label>
-                                <input type="text" id="profile-cpf">
+                                <input type="email" id="profile-email" readonly>
                             </div>
                             <div class="form-group">
                                 <label for="profile-phone">Telefone / Celular</label>
-                                <input type="tel" id="profile-phone">
+                                <input type="tel" id="profile-phone" readonly>
                             </div>
                             <div class="form-group">
-                                <label for="profile-pet-name">Nome do Pet</label>
-                                <input type="text" id="profile-pet-name">
-                            </div>
-                            <div class="form-group">
-                                <label for="profile-pet-breed">Raça do Pet</label>
-                                <input type="text" id="profile-pet-breed">
+                                <label for="profile-address">Endereço</label>
+                                <input type="text" id="profile-address" readonly>
                             </div>
                         </div>
                         <div class="form-actions" id="profile-actions">

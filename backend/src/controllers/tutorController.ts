@@ -21,7 +21,8 @@ export const cadastrarTutor = async (req: Request, res: Response) => {
 
         console.log('[DEBUG CADASTRO TUTOR] Dados recebidos:', { nome_completo, cpf, email });
 
-        if (!nome_completo || !cpf || !email || !senha) {
+        // Validação com trim
+        if (!nome_completo?.trim() || !cpf?.trim() || !email?.trim() || !senha?.trim()) {
             console.log('[DEBUG CADASTRO TUTOR] Erro: Campos obrigatórios não preenchidos.');
             return res.status(400).json({ message: 'Preencha todos os campos obrigatórios.' });
         }
@@ -32,7 +33,7 @@ export const cadastrarTutor = async (req: Request, res: Response) => {
         }
 
         const tutorExistente = await pool.query(
-            'SELECT * FROM tutores WHERE cpf = $1', [cpf]
+            'SELECT * FROM tutores WHERE cpf = $1', [cpf.trim()]
         );
 
         if (tutorExistente.rows.length > 0) {
@@ -45,15 +46,15 @@ export const cadastrarTutor = async (req: Request, res: Response) => {
         const queryTutor = `
             INSERT INTO tutores (nome_completo, telefone, endereco, cpf, email, senha)
             VALUES ($1, $2, $3, $4, $5, $6)
-            RETURNING id, nome_completo, cpf, email
+            RETURNING id, nome_completo, cpf, email, telefone, endereco
         `;
         
         const resultTutor = await pool.query(queryTutor, [
-            nome_completo,
-            telefone || '',
-            endereco || '',
-            cpf,
-            email,
+            nome_completo.trim(),
+            (telefone || '').trim(),
+            (endereco || '').trim(),
+            cpf.trim(),
+            email.trim(),
             senhaHash
         ]);
 
@@ -85,7 +86,7 @@ export const cadastrarPet = async (req: AuthRequest, res: Response) => {
 
         console.log('[DEBUG CADASTRO PET] Dados recebidos:', { nome, idade, tutorId });
 
-        if (!nome) {
+        if (!nome?.trim()) {
             console.log('[DEBUG CADASTRO PET] Erro: Nome do pet é obrigatório.');
             return res.status(400).json({ message: 'Nome do pet é obrigatório.' });
         }
@@ -101,11 +102,11 @@ export const cadastrarPet = async (req: AuthRequest, res: Response) => {
         try {
             const resultPet = await pool.query(queryPet, [
                 tutorId,
-                nome,
-                idade || '',
-                pelagem || '',
-                problemas_medicos || '',
-                notas_vacinacao || ''
+                nome.trim(),
+                (idade || '').trim(),
+                (pelagem || '').trim(),
+                (problemas_medicos || '').trim(),
+                (notas_vacinacao || '').trim()
             ]);
 
             console.log(`[DEBUG CADASTRO PET] Pet inserido com sucesso! ID: ${resultPet.rows[0].id}`);
@@ -132,15 +133,15 @@ export const loginTutor = async (req: Request, res: Response) => {
     const { cpf, senha } = req.body;
     console.log(`[DEBUG LOGIN] Tentativa de login recebida para CPF: ${cpf}`);
 
-    if (!cpf || !senha) {
+    if (!cpf?.trim() || !senha?.trim()) {
         console.log('[DEBUG LOGIN] Erro: CPF ou senha não fornecidos.');
         return res.status(400).json({ message: 'CPF e senha são obrigatórios.' });
     }
 
     try {
         const query = 'SELECT * FROM tutores WHERE cpf = $1';
-        console.log(`[DEBUG LOGIN] Executando query com CPF: ${cpf}`);
-        const resultado = await pool.query(query, [cpf]);
+        console.log(`[DEBUG LOGIN] Executando query com CPF: ${cpf.trim()}`);
+        const resultado = await pool.query(query, [cpf.trim()]);
 
         if (resultado.rows.length === 0) {
             console.log(`[DEBUG LOGIN] Erro: Nenhum tutor encontrado para o CPF: ${cpf}`);
@@ -151,7 +152,7 @@ export const loginTutor = async (req: Request, res: Response) => {
         console.log('[DEBUG LOGIN] Tutor encontrado:', { id: tutor.id, nome: tutor.nome_completo });
 
         console.log('[DEBUG LOGIN] Comparando senhas...');
-        const senhaCorreta = await bcrypt.compare(senha, tutor.senha);
+        const senhaCorreta = await bcrypt.compare(senha.trim(), tutor.senha);
         console.log(`[DEBUG LOGIN] Resultado da comparação de senha: ${senhaCorreta}`);
 
         if (!senhaCorreta) {
@@ -167,7 +168,14 @@ export const loginTutor = async (req: Request, res: Response) => {
         console.log('[DEBUG LOGIN] Token gerado com sucesso!');
         res.status(200).json({
             message: 'Login bem-sucedido!',
-            tutor: { id: tutor.id, nome: tutor.nome_completo, cpf: tutor.cpf },
+            tutor: { 
+                id: tutor.id, 
+                nome_completo: tutor.nome_completo, 
+                cpf: tutor.cpf,
+                email: tutor.email,
+                telefone: tutor.telefone,
+                endereco: tutor.endereco
+            },
             token: token
         });
 
@@ -178,7 +186,7 @@ export const loginTutor = async (req: Request, res: Response) => {
 };
 
 // ============================================
-// FUNÇÃO DE PERFIL
+// FUNÇÃO DE PERFIL - GET
 // ============================================
 export const getPerfilTutor = async (req: AuthRequest, res: Response) => {
     try {
@@ -204,5 +212,76 @@ export const getPerfilTutor = async (req: AuthRequest, res: Response) => {
     } catch (error: any) {
         console.error('[DEBUG PERFIL] Erro inesperado ao buscar perfil:', error.message);
         res.status(500).json({ message: 'Erro ao buscar perfil' });
+    }
+};
+
+// ============================================
+// FUNÇÃO DE PERFIL - PUT (ATUALIZAR)
+// ============================================
+export const atualizarPerfilTutor = async (req: AuthRequest, res: Response) => {
+    try {
+        const tutorId = req.user?.id;
+
+        if (!tutorId) {
+            console.log('[DEBUG PERFIL UPDATE] Erro: Usuário não autenticado.');
+            return res.status(401).json({ message: 'Usuário não autenticado.' });
+        }
+
+        const { nome_completo, email, telefone, endereco } = req.body;
+
+        console.log(`[DEBUG PERFIL UPDATE] Atualizando perfil do tutor ID: ${tutorId}`);
+        console.log('[DEBUG PERFIL UPDATE] Dados recebidos (antes do trim):', { nome_completo, email, telefone, endereco });
+
+        // Aplicar trim em todos os campos
+        const nomeTrimmed = nome_completo?.trim();
+        const emailTrimmed = email?.trim();
+        const telefoneTrimmed = telefone?.trim();
+        const enderecoTrimmed = endereco?.trim() || '';
+
+        console.log('[DEBUG PERFIL UPDATE] Dados após trim:', { nomeTrimmed, emailTrimmed, telefoneTrimmed, enderecoTrimmed });
+
+        if (!nomeTrimmed || !emailTrimmed || !telefoneTrimmed) {
+            console.log('[DEBUG PERFIL UPDATE] Erro: Campos obrigatórios não preenchidos.');
+            return res.status(400).json({ message: 'Nome, email e telefone são obrigatórios.' });
+        }
+
+        const query = `
+            UPDATE tutores 
+            SET nome_completo = $1, email = $2, telefone = $3, endereco = $4
+            WHERE id = $5
+            RETURNING id, nome_completo, email, telefone, endereco, cpf
+        `;
+
+        try {
+            const resultado = await pool.query(query, [
+                nomeTrimmed,
+                emailTrimmed,
+                telefoneTrimmed,
+                enderecoTrimmed,
+                tutorId
+            ]);
+
+            if (resultado.rows.length === 0) {
+                console.log('[DEBUG PERFIL UPDATE] Erro: Tutor não encontrado.');
+                return res.status(404).json({ message: 'Tutor não encontrado' });
+            }
+
+            console.log('[DEBUG PERFIL UPDATE] Perfil atualizado com sucesso!');
+            console.log('[DEBUG PERFIL UPDATE] Dados atualizados no banco:', resultado.rows[0]);
+            
+            res.status(200).json({
+                message: 'Perfil atualizado com sucesso!',
+                tutor: resultado.rows[0]
+            });
+        } catch (dbError: any) {
+            console.error('[DEBUG PERFIL UPDATE] Erro de banco de dados:', dbError.message);
+            console.error('[DEBUG PERFIL UPDATE] Detalhes do erro:', dbError);
+            res.status(500).json({ message: `Erro de banco: ${dbError.message}` });
+        }
+
+    } catch (error: any) {
+        console.error('[DEBUG PERFIL UPDATE] Erro inesperado:', error.message);
+        console.error('[DEBUG PERFIL UPDATE] Stack:', error.stack);
+        res.status(500).json({ message: `Erro ao atualizar perfil: ${error.message}` });
     }
 };
