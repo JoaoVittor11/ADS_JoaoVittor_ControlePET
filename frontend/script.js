@@ -49,10 +49,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const saveProfileBtn = document.getElementById('save-profile-btn');
     const cancelEditProfileBtn = document.getElementById('cancel-edit-profile-btn');
 
-    // Inputs alternativos (backup)
-    const cpfInput = document.getElementById('cpf');
-    const passwordInput = document.getElementById('password');
-
     // API
     const API_URL = 'http://localhost:3333';
 
@@ -129,21 +125,40 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             userPets.forEach(pet => {
                 const petCardHTML = `
-                    <div class="pet-card">
+                    <div class="pet-card" data-pet-id="${pet.id}">
                         <div class="pet-card-header">
                             <div class="pet-card-title">
                                 <h3>${pet.nome}</h3>
                                 <span>Idade: ${pet.idade}</span>
                             </div>
                             <div class="pet-card-actions">
-                                <button class="action-btn btn-edit" data-action="edit-pet" data-pet-id="${pet.id}">Editar Pet</button>
-                                <button class="action-btn btn-delete" data-action="delete-pet" data-pet-id="${pet.id}">Excluir Pet</button>
+                                <button class="action-btn btn-edit" data-action="edit-pet" data-pet-id="${pet.id}">Editar</button>
+                                <button class="action-btn btn-save hidden" data-action="save-pet" data-pet-id="${pet.id}">Salvar</button>
+                                <button class="action-btn btn-cancel hidden" data-action="cancel-edit" data-pet-id="${pet.id}">Cancelar</button>
+                                <button class="action-btn btn-delete" data-action="delete-pet" data-pet-id="${pet.id}">Excluir</button>
                             </div>
                         </div>
                         <div class="pet-card-info">
-                            <p><strong>Pelagem:</strong> ${pet.pelagem}</p>
-                            <p><strong>Problemas Médicos:</strong> ${pet.problemas_medicos}</p>
-                            <p><strong>Vacinas:</strong> ${pet.notas_vacinas}</p>
+                            <div class="form-group">
+                                <label><strong>Nome:</strong></label>
+                                <input type="text" class="pet-input" data-field="nome" value="${pet.nome}" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label><strong>Idade:</strong></label>
+                                <input type="text" class="pet-input" data-field="idade" value="${pet.idade}" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label><strong>Pelagem:</strong></label>
+                                <input type="text" class="pet-input" data-field="pelagem" value="${pet.pelagem}" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label><strong>Problemas Médicos:</strong></label>
+                                <textarea class="pet-input" data-field="problemas_medicos" readonly>${pet.problemas_medicos}</textarea>
+                            </div>
+                            <div class="form-group">
+                                <label><strong>Vacinas:</strong></label>
+                                <textarea class="pet-input" data-field="notas_vacinas" readonly>${pet.notas_vacinas}</textarea>
+                            </div>
                         </div>
                     </div>`;
                 petsListContainer.insertAdjacentHTML('beforeend', petCardHTML);
@@ -251,14 +266,39 @@ document.addEventListener('DOMContentLoaded', () => {
         registerForm.addEventListener('submit', async (event) => {
             event.preventDefault();
 
-            if (regPasswordInput && regConfirmPasswordInput && regPasswordInput.value !== regConfirmPasswordInput.value) {
+            // Capturar dados diretamente dos inputs
+            const nome_completo = document.getElementById('reg-name').value.trim();
+            const telefone = document.getElementById('reg-phone').value.trim();
+            const endereco = document.getElementById('reg-address').value.trim();
+            const cpf = document.getElementById('reg-cpf').value.trim();
+            const email = document.getElementById('reg-email').value.trim();
+            const senha = document.getElementById('reg-password').value;
+            const confirm_password = document.getElementById('reg-confirm-password').value;
+
+            console.log('[DEBUG REGISTRO] Dados capturados:', { nome_completo, telefone, endereco, cpf, email, senha, confirm_password });
+
+            // Validação básica
+            if (!nome_completo || !cpf || !email || !senha) {
+                alert('Preencha todos os campos obrigatórios!');
+                return;
+            }
+
+            if (senha !== confirm_password) {
                 alert('As senhas não coincidem.');
                 return;
             }
 
-            const formData = new FormData(registerForm);
-            const data = Object.fromEntries(formData.entries());
-            delete data['confirm_password'];
+            const data = { 
+                nome_completo, 
+                telefone, 
+                endereco, 
+                cpf, 
+                email, 
+                senha, 
+                confirm_password 
+            };
+
+            console.log('[DEBUG REGISTRO] Enviando para API:', data);
 
             try {
                 const response = await fetch(`${API_URL}/api/tutores/cadastro`, {
@@ -266,12 +306,19 @@ document.addEventListener('DOMContentLoaded', () => {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(data),
                 });
+
                 const result = await response.json();
-                if (!response.ok) throw new Error(result.message || 'Falha no cadastro.');
+                console.log('[DEBUG REGISTRO] Resposta do servidor:', result);
+
+                if (!response.ok) {
+                    throw new Error(result.message || 'Falha no cadastro.');
+                }
+
                 alert('Cadastro realizado com sucesso! Pode fazer o login.');
                 registerForm.reset();
                 showMainContainer(loginContainer);
             } catch (error) {
+                console.error('[DEBUG REGISTRO] Erro:', error);
                 alert(`Erro no cadastro: ${error.message}`);
             }
         });
@@ -602,7 +649,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const action = target.dataset.action;
             const petId = parseInt(target.dataset.petId);
             const token = localStorage.getItem('authToken');
+            const petCard = document.querySelector(`.pet-card[data-pet-id="${petId}"]`);
 
+            // ========== DELETAR PET ==========
             if (action === 'delete-pet') {
                 if (confirm('Tem certeza que deseja excluir este pet?')) {
                     try {
@@ -627,49 +676,70 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
 
+            // ========== EDITAR PET (Ativa modo edição) ==========
             if (action === 'edit-pet') {
+                const inputs = petCard.querySelectorAll('.pet-input');
+                inputs.forEach(input => input.readOnly = false);
+
+                // Mostra botões de salvar/cancelar, esconde editar/excluir
+                petCard.querySelector('[data-action="edit-pet"]').classList.add('hidden');
+                petCard.querySelector('[data-action="delete-pet"]').classList.add('hidden');
+                petCard.querySelector('[data-action="save-pet"]').classList.remove('hidden');
+                petCard.querySelector('[data-action="cancel-edit"]').classList.remove('hidden');
+            }
+
+            // ========== CANCELAR EDIÇÃO ==========
+            if (action === 'cancel-edit') {
+                const inputs = petCard.querySelectorAll('.pet-input');
+                inputs.forEach(input => input.readOnly = true);
+
+                // Restaura valores originais
                 const pet = userPets.find(p => p.id === petId);
                 if (pet) {
-                    const nome = prompt('Nome do Pet:', pet.nome);
-                    if (nome === null) return;
-                    const idade = prompt('Idade:', pet.idade);
-                    if (idade === null) return;
-                    const pelagem = prompt('Pelagem:', pet.pelagem);
-                    if (pelagem === null) return;
-                    const problemas = prompt('Problemas Médicos:', pet.problemas_medicos);
-                    if (problemas === null) return;
-                    const vacinas = prompt('Notas de Vacinação:', pet.notas_vacinas);
-                    if (vacinas === null) return;
+                    petCard.querySelector('[data-field="nome"]').value = pet.nome;
+                    petCard.querySelector('[data-field="idade"]').value = pet.idade;
+                    petCard.querySelector('[data-field="pelagem"]').value = pet.pelagem;
+                    petCard.querySelector('[data-field="problemas_medicos"]').value = pet.problemas_medicos;
+                    petCard.querySelector('[data-field="notas_vacinas"]').value = pet.notas_vacinas;
+                }
 
-                    const petData = {
-                        nome,
-                        idade,
-                        pelagem,
-                        problemas_medicos: problemas,
-                        notas_vacinas: vacinas
-                    };
+                // Mostra botões de editar/excluir, esconde salvar/cancelar
+                petCard.querySelector('[data-action="edit-pet"]').classList.remove('hidden');
+                petCard.querySelector('[data-action="delete-pet"]').classList.remove('hidden');
+                petCard.querySelector('[data-action="save-pet"]').classList.add('hidden');
+                petCard.querySelector('[data-action="cancel-edit"]').classList.add('hidden');
+            }
 
-                    try {
-                        const response = await fetch(`${API_URL}/api/tutores/pets/${petId}`, {
-                            method: 'PUT',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'Authorization': `Bearer ${token}`
-                            },
-                            body: JSON.stringify(petData)
-                        });
+            // ========== SALVAR ALTERAÇÕES ==========
+            if (action === 'save-pet') {
+                const petData = {
+                    nome: petCard.querySelector('[data-field="nome"]').value,
+                    idade: petCard.querySelector('[data-field="idade"]').value,
+                    pelagem: petCard.querySelector('[data-field="pelagem"]').value,
+                    problemas_medicos: petCard.querySelector('[data-field="problemas_medicos"]').value,
+                    notas_vacinas: petCard.querySelector('[data-field="notas_vacinas"]').value
+                };
 
-                        const result = await response.json();
+                try {
+                    const response = await fetch(`${API_URL}/api/tutores/pets/${petId}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify(petData)
+                    });
 
-                        if (!response.ok) {
-                            throw new Error(result.message || 'Erro ao atualizar pet.');
-                        }
+                    const result = await response.json();
 
-                        alert('Pet atualizado com sucesso!');
-                        carregarPets();
-                    } catch (error) {
-                        alert(`Erro ao atualizar: ${error.message}`);
+                    if (!response.ok) {
+                        throw new Error(result.message || 'Erro ao atualizar pet.');
                     }
+
+                    alert('Pet atualizado com sucesso!');
+                    carregarPets();
+                } catch (error) {
+                    alert(`Erro ao atualizar: ${error.message}`);
                 }
             }
         });

@@ -37,7 +37,7 @@
         </section>
     </main>
 
-    <!-- REGISTRO (SEM PET) -->
+    <!-- REGISTRO (SEM CPF NO CADASTRO - SOMENTE EDIÇÃO) -->
     <main id="register-container" class="container hidden">
         <section class="auth-page">
             <div class="auth-header">
@@ -140,7 +140,7 @@
             </section>
         </main>
         
-        <!-- MEUS PETS (COM FORMULÁRIO DE CADASTRO) -->
+        <!-- MEUS PETS -->
         <main id="meus-pets-page" class="dashboard-page hidden">
             <section class="dashboard">
                 <header class="dashboard-header">
@@ -152,43 +152,48 @@
                     <button id="show-add-pet-form-btn" class="btn btn-secondary">Adicionar Novo Pet</button>
                 </div>
 
-                <!-- FORMULÁRIO DE CADASTRO DE PET -->
-                <div id="add-pet-form-container" class="pet-card hidden">
-                    <h3>Cadastrar Novo Pet</h3>
+                <!-- FORMULÁRIO DE CADASTRO DE PET (OCULTO POR PADRÃO) -->
+                <div id="add-pet-form-container" class="hidden">
+                    <h3>Adicionar Novo Pet</h3>
                     <form id="add-pet-form">
-                        <div class="form-group">
-                            <label for="pet-name">Nome do Animal</label>
-                            <input type="text" id="pet-name" required>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="pet-name">Nome do Pet*</label>
+                                <input type="text" id="pet-name" name="nome" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="pet-age">Idade</label>
+                                <input type="text" id="pet-age" name="idade">
+                            </div>
+                            <div class="form-group">
+                                <label for="pet-fur">Pelagem</label>
+                                <input type="text" id="pet-fur" name="pelagem">
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <label for="pet-age">Idade</label>
-                            <input type="text" id="pet-age" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="pet-fur">Pelagem</label>
-                            <input type="text" id="pet-fur" required>
-                        </div>
+
                         <div class="form-group">
                             <label for="pet-problems">Problemas Médicos</label>
-                            <textarea id="pet-problems" rows="3"></textarea>
+                            <textarea id="pet-problems" name="problemas_medicos"></textarea>
                         </div>
+
                         <div class="form-group">
                             <label for="pet-vaccines">Notas de Vacinação</label>
-                            <textarea id="pet-vaccines" rows="4"></textarea>
+                            <textarea id="pet-vaccines" name="notas_vacinas"></textarea>
                         </div>
+
                         <div class="form-actions">
-                            <button type="button" id="cancel-add-pet-btn" class="btn btn-secondary">Cancelar</button>
                             <button type="submit" class="btn">Salvar Pet</button>
+                            <button type="button" id="cancel-add-pet-btn" class="btn btn-secondary">Cancelar</button>
                         </div>
                     </form>
                 </div>
 
-                <!-- LISTA DE PETS -->
+                <!-- CONTAINER PARA RENDERIZAR CARDS DE PETS (GERADO PELO JS) -->
                 <div id="pets-list-container"></div>
             </section>
         </main>
 
-        <!-- MEU CADASTRO (EDITÁVEL - SEM CPF) -->
+        <!-- MEU CADASTRO (EDITÁVEL) -->
         <main id="meu-cadastro-page" class="dashboard-page hidden">
             <section class="dashboard">
                 <header class="dashboard-header">
@@ -196,7 +201,7 @@
                     <p>Visualize e edite suas informações pessoais.</p>
                 </header>
     
-                <div class="profile-card pet-card">
+                <div class="profile-card">
                     <form id="profile-form">
                         <div class="form-grid">
                             <div class="form-group">
