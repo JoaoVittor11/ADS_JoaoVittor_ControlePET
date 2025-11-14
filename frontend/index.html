@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PetShop System</title>
-    
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -37,7 +36,7 @@
         </section>
     </main>
 
-    <!-- REGISTRO (SEM CPF NO CADASTRO - SOMENTE EDIÇÃO) -->
+    <!-- REGISTRO -->
     <main id="register-container" class="container hidden">
         <section class="auth-page">
             <div class="auth-header">
@@ -91,6 +90,7 @@
                 <a href="#" class="nav-item active" data-page="agendamentos">Agendamentos</a>
                 <a href="#" class="nav-item" data-page="meus-pets">Meus Pets</a>
                 <a href="#" class="nav-item" data-page="meu-cadastro">Meu Cadastro</a>
+                <a href="#" class="nav-item" data-page="avaliacao">Avaliação</a>
             </nav>
             <div class="sidebar-footer">
                 <button id="logout-btn" class="btn logout-btn">Sair</button>
@@ -104,7 +104,6 @@
                     <h1>Novo Agendamento</h1>
                     <p>Selecione um dia e um horário para o serviço.</p>
                 </header>
-                
                 <div class="scheduler-container">
                     <div class="calendar-wrapper">
                         <div class="calendar-header">
@@ -117,7 +116,6 @@
                         </div>
                         <div class="calendar-dates" id="calendar-dates"></div>
                     </div>
-
                     <div class="time-slots-wrapper">
                         <h4>Horários para <span id="selected-date-span">--/--/----</span></h4>
                         <div class="time-slots" id="time-slots">
@@ -147,12 +145,9 @@
                     <h1>Meus Pets</h1>
                     <p>Visualize e adicione as informações dos seus animais.</p>
                 </header>
-                
                 <div class="page-actions">
                     <button id="show-add-pet-form-btn" class="btn btn-secondary">Adicionar Novo Pet</button>
                 </div>
-
-                <!-- FORMULÁRIO DE CADASTRO DE PET (OCULTO POR PADRÃO) -->
                 <div id="add-pet-form-container" class="hidden">
                     <h3>Adicionar Novo Pet</h3>
                     <form id="add-pet-form">
@@ -170,37 +165,31 @@
                                 <input type="text" id="pet-fur" name="pelagem">
                             </div>
                         </div>
-
                         <div class="form-group">
                             <label for="pet-problems">Problemas Médicos</label>
                             <textarea id="pet-problems" name="problemas_medicos"></textarea>
                         </div>
-
                         <div class="form-group">
                             <label for="pet-vaccines">Notas de Vacinação</label>
                             <textarea id="pet-vaccines" name="notas_vacinas"></textarea>
                         </div>
-
                         <div class="form-actions">
                             <button type="submit" class="btn">Salvar Pet</button>
                             <button type="button" id="cancel-add-pet-btn" class="btn btn-secondary">Cancelar</button>
                         </div>
                     </form>
                 </div>
-
-                <!-- CONTAINER PARA RENDERIZAR CARDS DE PETS (GERADO PELO JS) -->
                 <div id="pets-list-container"></div>
             </section>
         </main>
 
-        <!-- MEU CADASTRO (EDITÁVEL) -->
+        <!-- MEU CADASTRO -->
         <main id="meu-cadastro-page" class="dashboard-page hidden">
             <section class="dashboard">
                 <header class="dashboard-header">
                     <h1>Meu Cadastro</h1>
                     <p>Visualize e edite suas informações pessoais.</p>
                 </header>
-    
                 <div class="profile-card">
                     <form id="profile-form">
                         <div class="form-grid">
@@ -228,6 +217,31 @@
                         </div>
                     </form>
                 </div>
+            </section>
+        </main>
+
+        <!-- AVALIAÇÃO -->
+        <main id="avaliacao-page" class="dashboard-page hidden">
+            <section class="dashboard">
+                <header class="dashboard-header">
+                    <h1>Avalie nosso atendimento</h1>
+                </header>
+                <form id="avaliacao-form">
+                    <div class="form-group">
+                        <label for="avaliacao-func">Avaliação dos Funcionários</label>
+                        <textarea id="avaliacao-func" placeholder="Fale sobre sua experiência"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="sugestao">Sugestão de Melhoria</label>
+                        <textarea id="sugestao" placeholder="Tem alguma sugestão?"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Nota geral:</label>
+                        <div id="estrelas"></div>
+                    </div>
+                    <button type="submit" class="btn">Enviar Avaliação</button>
+                </form>
+                <div id="lista-avaliacoes" style="margin-top:2rem;"></div>
             </section>
         </main>
     </div>

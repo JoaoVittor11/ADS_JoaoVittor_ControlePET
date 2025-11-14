@@ -49,6 +49,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const saveProfileBtn = document.getElementById('save-profile-btn');
     const cancelEditProfileBtn = document.getElementById('cancel-edit-profile-btn');
 
+    // Página "Avaliação"
+    const avaliacaoForm = document.getElementById('avaliacao-form');
+    const estrelasDiv = document.getElementById('estrelas');
+    const listaAvaliacoesDiv = document.getElementById('lista-avaliacoes');
+
     // API
     const API_URL = 'http://localhost:3333';
 
@@ -69,6 +74,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const availableServices = ['Banho', 'Tosa', 'Banho e Tosa', 'Consulta Veterinária'];
     const bookedAppointments = {};
     let userPets = [];
+
+    // Avaliações (em memória)
+    let notaSelecionada = 0;
+    let avaliacoes = [];
 
     // ===================================================================
     //  3. FUNÇÕES DE CONTROLE DA INTERFACE (UI)
@@ -97,6 +106,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (pageId === 'meus-pets') {
             carregarPets();
         }
+        if (pageId === 'avaliacao') {
+            renderAvaliacoes();
+            renderEstrelas();
+        }
     }
 
     function renderProfilePage() {
@@ -111,7 +124,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (profilePhoneInput) profilePhoneInput.readOnly = !isEditing;
         if (profileEmailInput) profileEmailInput.readOnly = !isEditing;
         if (profileAddressInput) profileAddressInput.readOnly = !isEditing;
-        
+
         if (editProfileBtn) editProfileBtn.classList.toggle('hidden', isEditing);
         if (saveProfileBtn) saveProfileBtn.classList.toggle('hidden', !isEditing);
         if (cancelEditProfileBtn) cancelEditProfileBtn.classList.toggle('hidden', !isEditing);
@@ -448,7 +461,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // ===================================================================
     //  6. EVENT LISTENERS
     // ===================================================================
-    
     if (sidebarNav) {
         sidebarNav.addEventListener('click', (e) => {
             const navItem = e.target.closest('.nav-item');
@@ -755,5 +767,78 @@ document.addEventListener('DOMContentLoaded', () => {
         showDashboardPage('agendamentos');
     } else {
         showMainContainer(loginContainer);
+    }
+
+    // ==== Novas funções para avaliação ====
+
+    // Renderizar estrelas na aba de avaliação
+    function renderEstrelas() {
+        if (!estrelasDiv) return;
+        estrelasDiv.innerHTML = '';
+        for (let i = 1; i <= 5; i++) {
+            const estrela = document.createElement('span');
+            estrela.textContent = '★';
+            estrela.style.fontSize = '2rem';
+            estrela.style.cursor = 'pointer';
+            estrela.style.color = i <= notaSelecionada ? '#FFD600' : '#ddd';
+            estrela.setAttribute('data-value', i);
+            estrela.addEventListener('click', () => {
+                notaSelecionada = i;
+                renderEstrelas();
+            });
+            estrelasDiv.appendChild(estrela);
+        }
+    }
+
+    // Renderizar lista de avaliações
+    function renderAvaliacoes() {
+        if (!listaAvaliacoesDiv) return;
+        if (avaliacoes.length === 0) {
+            listaAvaliacoesDiv.innerHTML = '<i>Nenhuma avaliação ainda.</i>';
+            return;
+        }
+        listaAvaliacoesDiv.innerHTML = '<h3>Últimas avaliações:</h3>';
+        avaliacoes.slice().reverse().forEach(avl => {
+            listaAvaliacoesDiv.innerHTML += `
+                <div style="border:1px solid #eee; margin-bottom:12px; padding:10px; border-radius:8px;">
+                    <div>
+                        <span style="color:#FFD600; font-size:1.2rem">${'★'.repeat(avl.estrelas)}</span>
+                        <span style="color:#ddd;">${'★'.repeat(5 - avl.estrelas)}</span>
+                    </div>
+                    <p style="margin: 5px 0 2px;"><b>Funcionários:</b> ${avl.avaliacao_func || '<i>(Não informada)</i>'}</p>
+                    <p style="margin: 2px 0 0;"><b>Sugestão:</b> ${avl.sugestao || '<i>(Nenhuma)</i>'}</p>
+                    <small>${avl.data.toLocaleString()}</small>
+                </div>
+            `;
+        });
+    }
+
+    // Submeter avaliação
+    if (avaliacaoForm) {
+        avaliacaoForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const avaliacao_func = document.getElementById('avaliacao-func').value;
+            const sugestao = document.getElementById('sugestao').value;
+            const estrelas = notaSelecionada;
+
+            if (estrelas === 0) {
+                alert('Escolha ao menos uma estrela!');
+                return;
+            }
+
+            avaliacoes.push({
+                avaliacao_func,
+                sugestao,
+                estrelas,
+                data: new Date()
+            });
+
+            this.reset();
+            notaSelecionada = 0;
+            renderEstrelas();
+            renderAvaliacoes();
+            alert('Obrigado pela sua avaliação!');
+        });
     }
 });
